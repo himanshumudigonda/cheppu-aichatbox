@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy Cheppu AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .step {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .step h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        .step p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        .step ol {
+            margin-left: 20px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 10px 10px 10px 0;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .success {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .code {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Cheppu AI Chatbot</h1>
+        <p class="subtitle">3-Step Automated Deployment Guide</p>
+
+        <div class="step">
+            <div class="badge">Step 1 of 3</div>
+            <h2>📦 Push to GitHub</h2>
+            <p>Everything is already committed! Just run this:</p>
+            <ol>
+                <li>Double-click <strong>PUSH_TO_GITHUB.bat</strong></li>
+                <li>Enter your GitHub username when prompted</li>
+                <li>If asked for password, use Personal Access Token (not your password)</li>
+            </ol>
+            <p style="margin-top: 15px;">Don't have a GitHub account?</p>
+            <a href="https://github.com/signup" target="_blank" class="button">Create GitHub Account</a>
+            <a href="https://github.com/settings/tokens" target="_blank" class="button">Get Access Token</a>
+        </div>
+
+        <div class="step">
+            <div class="badge">Step 2 of 3</div>
+            <h2>🌐 Deploy Backend to Render</h2>
+            <p>Render will host your backend for FREE (no credit card needed):</p>
+            <ol>
+                <li>Go to Render and sign up with GitHub</li>
+                <li>Click "New +" → "Web Service"</li>
+                <li>Select <strong>cheppu-ai-chatbot</strong> repository</li>
+                <li>Render auto-detects everything!</li>
+                <li>Add environment variable: <code>HF_TOKEN</code> = [Your Token from <a href="https://huggingface.co/settings/tokens" target="_blank">here</a>]</li>
+                <li>Click "Create Web Service"</li>
+                <li>Copy your URL (like: https://cheppu-XXXX.onrender.com)</li>
+            </ol>
+            <a href="https://render.com" target="_blank" class="button">Go to Render.com</a>
+        </div>
+
+        <div class="step">
+            <div class="badge">Step 3 of 3</div>
+            <h2>✨ Update Frontend</h2>
+            <p>Connect your frontend to the backend:</p>
+            <ol>
+                <li>Double-click <strong>UPDATE_FRONTEND.bat</strong></li>
+                <li>Paste your Render URL when prompted</li>
+                <li>Script will automatically update and push changes</li>
+            </ol>
+        </div>
+
+        <div class="success">
+            🎉 After these 3 steps, your AI chatbot will be LIVE with all features!<br>
+            💬 Chat • 🎨 Image Generation • 🔊 Text-to-Speech
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px;">
+            <h3 style="color: #856404; margin-bottom: 10px;">📝 Quick Commands</h3>
+            <p style="color: #856404; margin-bottom: 10px;"><strong>Already have everything set up?</strong></p>
+            <div class="code" style="background: #fff; color: #333; border: 1px solid #ddd;">
+cd "c:\Users\HIMANSHU\OneDrive\Desktop\all desktop stuff\New folder"
+git push
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; text-align: center; color: #666; font-size: 14px;">
+            Need help? Check <strong>DEPLOYMENT.md</strong> for detailed instructions
+        </div>
+    </div>
+</body>
+</html>
