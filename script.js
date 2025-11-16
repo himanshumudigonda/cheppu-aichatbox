@@ -25,8 +25,8 @@ const imageApiUrl = "https://api-inference.huggingface.co/models/";
 const ttsApiUrl = "https://api-inference.huggingface.co/models/";
 
 // Use proxy server to bypass CORS (set to true if running proxy-server.js)
-const useProxyServer = false; // Change to true if using the proxy
-const proxyUrl = "http://localhost:3000";
+const useProxyServer = true; // Change to true if using the proxy
+const proxyUrl = "https://cheppu-aichatbox.onrender.com";
 
 // DOM Elements
 const welcomeScreen = document.getElementById('welcomeScreen');
