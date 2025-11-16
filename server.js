@@ -77,8 +77,8 @@ app.post('/', async (req, res) => {
         console.log(`[${new Date().toISOString()}] ${type || 'unknown'} request for model: ${model}`);
         console.log(`Input length: ${inputs.length} characters`);
 
-        // Make request to HuggingFace
-        const hfUrl = `https://api-inference.huggingface.co/models/${model}`;
+        // Make request to HuggingFace - NEW API ENDPOINT
+        const hfUrl = `https://router.huggingface.co/hf-inference/models/${model}`;
         
         const response = await fetch(hfUrl, {
             method: 'POST',
