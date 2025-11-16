@@ -17,14 +17,12 @@ let currentChatId = null;
 let currentMode = 'chat'; // 'chat' or 'image'
 
 // API Configuration - v2.0
-// IMPORTANT: Replace this with your own HuggingFace API token
-// Get free token from: https://huggingface.co/settings/tokens
 const apiKey = ""; // Token removed for security - backend handles auth
 const apiUrl = "https://router.huggingface.co/v1/chat/completions";
 const imageApiUrl = "https://api-inference.huggingface.co/models/";
 
-// Use proxy server to bypass CORS (set to true if running proxy-server.js)
-const useProxyServer = true; // Change to true if using the proxy
+// Use proxy server to bypass CORS
+const useProxyServer = true;
 const proxyUrl = "https://cheppu-aichatbox.onrender.com";
 
 // DOM Elements
@@ -40,11 +38,9 @@ const chatModelSelector = document.getElementById('chatModelSelector');
 const imageModelSelector = document.getElementById('imageModelSelector');
 const chatSuggestions = document.getElementById('chatSuggestions');
 const imageSuggestions = document.getElementById('imageSuggestions');
-const historyItems = document.getElementById('historyItems');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    loadChatHistory();
     setupEventListeners();
     autoResizeTextarea();
 });
@@ -178,18 +174,14 @@ async function handleSendMessage() {
             
             if (error.name === 'AbortError') {
                 errorMessage = "⏱️ Request timed out. The model might be busy. Please try again.";
+            } else if (error.message.includes('402')) {
+                errorMessage = "💳 HuggingFace requires payment for image generation. Your free tier has expired or needs credits added at https://huggingface.co/settings/billing";
             } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                errorMessage = `🌐 CORS/Network Error: The HuggingFace API blocks direct browser requests. 
-                
-                <br><br><strong>Solutions:</strong>
-                <br>1. Use a backend server (Node.js/Python) as a proxy
-                <br>2. Try the browser extension: <a href="https://chrome.google.com/webstore/detail/allow-cors/lhobafahddgcelffkeicbaginigeejlf" target="_blank" style="color: #6366F1;">Allow CORS</a>
-                <br>3. Deploy to a server (Vercel, Netlify, etc.)
-                <br><br>The API works but needs a backend to bypass CORS restrictions.`;
+                errorMessage = `🌐 CORS/Network Error: Unable to reach the image generation service.`;
             } else if (error.message.includes('503')) {
                 errorMessage = "⏳ Model is loading. Please wait 30 seconds and try again.";
             } else if (error.message.includes('401')) {
-                errorMessage = "🔑 Invalid API key. Please check the token in script.js";
+                errorMessage = "🔑 Invalid API key. Please check the token configuration.";
             }
             
             addMessage('ai', errorMessage);
@@ -200,9 +192,6 @@ async function handleSendMessage() {
     // Enable send button
     sendBtn.disabled = false;
     messageInput.focus();
-
-    // Save to history
-    saveChatToHistory(message);
 }
 
 // Call HuggingFace API
@@ -343,69 +332,11 @@ async function generateImage(prompt) {
             return URL.createObjectURL(blob);
         } catch (error) {
             console.error('Proxy server error:', error);
-            throw new Error('Proxy server error. Make sure proxy-server.js is running with: node proxy-server.js');
+            throw error;
         }
     }
     
-    // Try different API endpoints (direct - will likely fail due to CORS)
-    const endpoints = [
-        `https://api-inference.huggingface.co/models/${selectedModel}`,
-    ];
-    
-    let lastError = null;
-    
-    for (const url of endpoints) {
-        let retries = 2;
-        let delay = 3000;
-
-        for (let i = 0; i < retries; i++) {
-            try {
-                console.log(`Trying image generation with ${url}`);
-                
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 60000);
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`,
-                    },
-                    body: JSON.stringify({
-                        inputs: prompt,
-                        options: {
-                            wait_for_model: true,
-                            use_cache: false
-                        }
-                    }),
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-
-                if (!response.ok) {
-                    if (response.status === 503) {
-                        await new Promise(res => setTimeout(res, 5000));
-                        continue;
-                    }
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const blob = await response.blob();
-                if (blob.size === 0) throw new Error('Empty response');
-                
-                return URL.createObjectURL(blob);
-
-            } catch (error) {
-                console.warn(`Attempt ${i + 1} failed:`, error.message);
-                lastError = error;
-                if (i < retries - 1) {
-                    await new Promise(res => setTimeout(res, delay));
-                }
-            }
-        }
-    }
-    
-    throw lastError || new Error('Image generation failed');
+    throw new Error('Direct API access not supported - proxy required');
 }
 
 // Add image message to chat
@@ -446,8 +377,6 @@ window.downloadImage = function(imageUrl, prompt) {
     document.body.removeChild(link);
 }
 
-
-
 // Start new chat
 function startNewChat() {
     // Reset chat history
@@ -470,64 +399,6 @@ function startNewChat() {
     messagesContainer.classList.remove('active');
     welcomeScreen.style.display = 'flex';
     currentChatId = null;
-}
-
-// Save chat to history
-function saveChatToHistory(message) {
-    const chat = {
-        id: Date.now(),
-        title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
-        timestamp: new Date().toISOString(),
-    };
-    
-    // Load existing local storage chat history
-    let localChatHistory = [];
-    const saved = localStorage.getItem('chatHistory');
-    if (saved) {
-        localChatHistory = JSON.parse(saved);
-    }
-    
-    localChatHistory.unshift(chat);
-    
-    // Keep only last 20 chats
-    if (localChatHistory.length > 20) {
-        localChatHistory = localChatHistory.slice(0, 20);
-    }
-    
-    localStorage.setItem('chatHistory', JSON.stringify(localChatHistory));
-    renderChatHistory();
-}
-
-// Load chat history
-function loadChatHistory() {
-    const saved = localStorage.getItem('chatHistory');
-    if (saved) {
-        const localChatHistory = JSON.parse(saved);
-        renderChatHistory();
-    }
-}
-
-// Render chat history
-function renderChatHistory() {
-    // If history UI is removed, skip rendering gracefully
-    if (!historyItems) return;
-
-    historyItems.innerHTML = '';
-
-    const saved = localStorage.getItem('chatHistory');
-    if (!saved) return;
-
-    const localChatHistory = JSON.parse(saved);
-
-    localChatHistory.forEach(chat => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        item.textContent = chat.title;
-        item.onclick = () => {
-            console.log('Load chat:', chat.id);
-        };
-        historyItems.appendChild(item);
-    });
 }
 
 // Mobile menu toggle
