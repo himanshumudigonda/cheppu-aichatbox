@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.HF_TOKEN || "YOUR_HUGGINGFACE_TOKEN_HERE";
-const OPENROUTER_API_KEY = "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";
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "YOUR_GROQ_API_KEY_HERE";
 
 // Log startup info (token masked for security)
 console.log('Server starting...');
@@ -41,29 +41,22 @@ app.post('/', async (req, res) => {
 
         // Handle chat requests
         if (type === 'chat' || messages) {
-            // Route to OpenRouter for specific models
-            const isOpenRouterModel = model.includes(':free') || model.startsWith('openai/');
-            const chatUrl = isOpenRouterModel 
-                ? 'https://openrouter.ai/api/v1/chat/completions'
+            // Route to Groq for specific models
+            const isGroqModel = model.includes('llama-3') || model.includes('mixtral') || model.includes('gemma2');
+            const chatUrl = isGroqModel 
+                ? 'https://api.groq.com/openai/v1/chat/completions'
                 : 'https://router.huggingface.co/v1/chat/completions';
             
-            const apiKey = isOpenRouterModel ? OPENROUTER_API_KEY : API_KEY;
+            const apiKey = isGroqModel ? GROQ_API_KEY : API_KEY;
             
-            console.log(`[${new Date().toISOString()}] Chat request for model: ${model} (${isOpenRouterModel ? 'OpenRouter' : 'HuggingFace'})`);
-            
-            const headers = {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            };
-            
-            if (isOpenRouterModel) {
-                headers['HTTP-Referer'] = 'https://cheppuai.netlify.app';
-                headers['X-Title'] = 'Cheppu AI Chatbot';
-            }
+            console.log(`[${new Date().toISOString()}] Chat request for model: ${model} (${isGroqModel ? 'Groq' : 'HuggingFace'})`);
             
             const response = await fetch(chatUrl, {
                 method: 'POST',
-                headers: headers,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
                     model: model,
                     messages: messages
