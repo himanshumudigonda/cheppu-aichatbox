@@ -56,6 +56,9 @@
                 <div class="ai-model-selector" id="chatModelSelector">
                     <label for="aiModel">Chat Model:</label>
                     <select id="aiModel">
+                        <option value="auto">🤖 Auto (Best)</option>
+                        <option value="groq/compound">Compound (Tools + Web)</option>
+                        <option value="groq/compound-mini">Compound Mini (Fast)</option>
                         <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B</option>
                         <option value="moonshotai/kimi-k2-instruct-0905">Kimi K2 Instruct</option>
                         <option value="openai/gpt-oss-120b">GPT OSS 120B</option>
@@ -145,33 +148,28 @@
                                     <circle cx="15" cy="10" r="1" fill="currentColor"/>
                                     <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
-                                <span>Cute robot with cat</span>
+                                <span>Robot playing with cat</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="messages-container" id="messagesContainer">
-                    <!-- Messages will be added here -->
+                    <!-- Messages will be added here dynamically -->
                 </div>
             </div>
 
             <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea 
-                        id="messageInput" 
-                        placeholder="Ask me anything..." 
-                        rows="1"
-                    ></textarea>
-                    <button class="send-btn" id="sendBtn">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M2 10L18 2L10 18L8 11L2 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="input-footer">
-                    <span class="disclaimer">AI can make mistakes. Consider checking important information.</span>
-                </div>
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Type your message..." 
+                    rows="1"
+                ></textarea>
+                <button id="sendBtn" class="send-btn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                    </svg>
+                </button>
             </div>
         </main>
     </div>

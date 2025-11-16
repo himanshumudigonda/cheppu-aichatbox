@@ -10,13 +10,13 @@ let chatHistory = [
     },
     {
         role: "assistant",
-        content: "Hello! How can I help you today?"
+        content: "Hello! How can I help you today!"
     }
 ];
 let currentChatId = null;
 let currentMode = 'chat'; // 'chat' or 'image'
 
-// API Configuration - v2.0
+// API Configuration
 const apiKey = ""; // Token removed for security - backend handles auth
 const apiUrl = "https://router.huggingface.co/v1/chat/completions";
 const imageApiUrl = "https://api-inference.huggingface.co/models/";
@@ -102,6 +102,39 @@ function autoResizeTextarea() {
     messageInput.style.height = messageInput.scrollHeight + 'px';
 }
 
+// Smart model selection based on query
+function selectBestModel(message) {
+    const lowerMsg = message.toLowerCase();
+    
+    // Web search indicators
+    if (lowerMsg.match(/latest|news|current|today|recent|what's happening|search|find information|weather|stock|price/)) {
+        return 'groq/compound'; // Has web search
+    }
+    
+    // Code execution indicators
+    if (lowerMsg.match(/run|execute|calculate|compute|python|code|program|script/)) {
+        return 'groq/compound'; // Has code interpreter
+    }
+    
+    // Complex reasoning
+    if (lowerMsg.length > 500 || lowerMsg.match(/analyze|detailed|comprehensive|explain in depth|research/)) {
+        return 'openai/gpt-oss-120b'; // Larger model
+    }
+    
+    // Quick simple queries
+    if (lowerMsg.length < 50 && !lowerMsg.includes('?')) {
+        return 'llama-3.1-8b-instant'; // Fast for simple tasks
+    }
+    
+    // Creative writing
+    if (lowerMsg.match(/write.*story|poem|creative|fiction|imagine/)) {
+        return 'qwen/qwen3-32b';
+    }
+    
+    // Default: balanced speed and quality
+    return 'llama-3.3-70b-versatile';
+}
+
 // Handle sending message
 async function handleSendMessage() {
     const message = messageInput.value.trim();
@@ -128,7 +161,7 @@ async function handleSendMessage() {
 
         // Get AI response
         try {
-            const response = await callHuggingFaceApi();
+            const response = await callHuggingFaceApi(message);
             
             // Remove typing indicator
             removeTypingIndicator(typingId);
@@ -195,8 +228,14 @@ async function handleSendMessage() {
 }
 
 // Call HuggingFace API
-async function callHuggingFaceApi() {
-    const selectedModel = aiModelSelect.value;
+async function callHuggingFaceApi(userMessage) {
+    let selectedModel = aiModelSelect.value;
+    
+    // Auto model selection
+    if (selectedModel === 'auto') {
+        selectedModel = selectBestModel(userMessage);
+        console.log(`🤖 Auto-selected model: ${selectedModel}`);
+    }
     
     const payload = {
         model: selectedModel,
