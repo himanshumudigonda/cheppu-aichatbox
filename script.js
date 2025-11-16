@@ -16,7 +16,7 @@ let chatHistory = [
 let currentChatId = null;
 let currentMode = 'chat'; // 'chat', 'image', or 'tts'
 
-// API Configuration
+// API Configuration - v2.0
 // IMPORTANT: Replace this with your own HuggingFace API token
 // Get free token from: https://huggingface.co/settings/tokens
 const apiKey = ""; // Token removed for security - backend handles auth
