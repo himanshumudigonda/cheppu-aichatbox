@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.HF_TOKEN || "YOUR_HUGGINGFACE_TOKEN_HERE";
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = "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";
 
 // Log startup info (token masked for security)
 console.log('Server starting...');
