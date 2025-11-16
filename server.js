@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.HF_TOKEN || "YOUR_HUGGINGFACE_TOKEN_HERE";
+const OPENROUTER_API_KEY = "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";
 
 // Log startup info (token masked for security)
 console.log('Server starting...');
@@ -40,16 +41,29 @@ app.post('/', async (req, res) => {
 
         // Handle chat requests
         if (type === 'chat' || messages) {
-            const chatUrl = 'https://router.huggingface.co/v1/chat/completions';
+            // Route to OpenRouter for specific models
+            const isOpenRouterModel = model.includes(':free') || model.startsWith('qwen/');
+            const chatUrl = isOpenRouterModel 
+                ? 'https://openrouter.ai/api/v1/chat/completions'
+                : 'https://router.huggingface.co/v1/chat/completions';
             
-            console.log(`[${new Date().toISOString()}] Chat request for model: ${model}`);
+            const apiKey = isOpenRouterModel ? OPENROUTER_API_KEY : API_KEY;
+            
+            console.log(`[${new Date().toISOString()}] Chat request for model: ${model} (${isOpenRouterModel ? 'OpenRouter' : 'HuggingFace'})`);
+            
+            const headers = {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            };
+            
+            if (isOpenRouterModel) {
+                headers['HTTP-Referer'] = 'https://cheppuai.netlify.app';
+                headers['X-Title'] = 'Cheppu AI Chatbot';
+            }
             
             const response = await fetch(chatUrl, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify({
                     model: model,
                     messages: messages
