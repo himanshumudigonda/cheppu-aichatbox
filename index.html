@@ -10,9 +10,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+    </button>
+
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -52,7 +59,6 @@
                     <select id="modelType" class="mode-select">
                         <option value="chat">💬 Chat</option>
                         <option value="image">🎨 Image Generation</option>
-                        <option value="tts">🔊 Text-to-Speech</option>
                     </select>
                 </div>
                 
@@ -75,14 +81,7 @@
                     </select>
                 </div>
                 
-                <div class="ai-model-selector" id="ttsModelSelector" style="display: none;">
-                    <label for="ttsModel">TTS Model:</label>
-                    <select id="ttsModel">
-                        <option value="facebook/mms-tts-eng">Meta MMS TTS (English)</option>
-                        <option value="suno/bark">Bark (Multilingual)</option>
-                        <option value="microsoft/speecht5_tts">SpeechT5</option>
-                    </select>
-                </div>
+
             </div>
         </aside>
 
@@ -152,36 +151,6 @@
                                     <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
                                 <span>Cute robot with cat</span>
-                            </div>
-                        </div>
-                        
-                        <div class="suggestion-cards" id="ttsSuggestions" style="display: none;">
-                            <div class="suggestion-card" data-prompt="Hello! Welcome to the future of artificial intelligence.">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" stroke-width="2"/>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Welcome message</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="The quick brown fox jumps over the lazy dog.">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                                    <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Test phrase</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Technology is revolutionizing the way we communicate and interact with the world.">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-width="2"/>
-                                </svg>
-                                <span>Technology quote</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Good morning! I hope you have a wonderful and productive day ahead.">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <circle cx="12" cy="12" r="5" stroke-width="2"/>
-                                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Greeting message</span>
                             </div>
                         </div>
                     </div>
