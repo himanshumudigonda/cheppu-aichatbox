@@ -41,20 +41,15 @@ app.post('/', async (req, res) => {
 
         // Handle chat requests
         if (type === 'chat' || messages) {
-            // Route to Groq for specific models
-            const isGroqModel = model.includes('llama-3') || model.includes('mixtral') || model.includes('gemma2');
-            const chatUrl = isGroqModel 
-                ? 'https://api.groq.com/openai/v1/chat/completions'
-                : 'https://router.huggingface.co/v1/chat/completions';
+            // All chat models now use Groq API
+            const chatUrl = 'https://api.groq.com/openai/v1/chat/completions';
             
-            const apiKey = isGroqModel ? GROQ_API_KEY : API_KEY;
-            
-            console.log(`[${new Date().toISOString()}] Chat request for model: ${model} (${isGroqModel ? 'Groq' : 'HuggingFace'})`);
+            console.log(`[${new Date().toISOString()}] Chat request for model: ${model} (Groq)`);
             
             const response = await fetch(chatUrl, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`,
+                    'Authorization': `Bearer ${GROQ_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
