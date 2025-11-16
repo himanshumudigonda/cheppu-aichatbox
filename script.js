@@ -290,10 +290,24 @@ function addMessage(role, content) {
     const avatar = role === 'user' ? 'U' : 'AI';
     const roleName = role === 'user' ? 'You' : 'AI Assistant';
     
+    // Add copy button for AI messages
+    const copyButton = role === 'ai' ? `
+        <button class="copy-btn" onclick="copyMessage(this)" title="Copy message">
+            <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </button>
+    ` : '';
+    
     messageDiv.innerHTML = `
         <div class="message-header">
             <div class="avatar ${role}">${avatar}</div>
             <span class="message-role">${roleName}</span>
+            ${copyButton}
         </div>
         <div class="message-content">${formatMessage(content)}</div>
     `;
@@ -458,3 +472,61 @@ document.addEventListener('click', (e) => {
         sidebar.classList.remove('open');
     }
 });
+
+// Copy message function
+window.copyMessage = function(button) {
+    const messageContent = button.closest('.message').querySelector('.message-content');
+    const textToCopy = messageContent.innerText || messageContent.textContent;
+    
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        // Show check icon
+        const copyIcon = button.querySelector('.copy-icon');
+        const checkIcon = button.querySelector('.check-icon');
+        
+        copyIcon.style.display = 'none';
+        checkIcon.style.display = 'block';
+        button.classList.add('copied');
+        
+        // Show toast notification
+        showToast('Copied to clipboard!');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            copyIcon.style.display = 'block';
+            checkIcon.style.display = 'none';
+            button.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy', 'error');
+    });
+}
+
+// Toast notification function
+function showToast(message, type = 'success') {
+    // Remove existing toast
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
