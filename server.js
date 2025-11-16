@@ -7,6 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.HF_TOKEN || "YOUR_HUGGINGFACE_TOKEN_HERE";
 
+// Log startup info (token masked for security)
+console.log('Server starting...');
+console.log('PORT:', PORT);
+console.log('HF_TOKEN present:', !!process.env.HF_TOKEN);
+console.log('API_KEY starts with:', API_KEY ? API_KEY.substring(0, 6) + '...' : 'NOT SET');
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
