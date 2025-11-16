@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.HF_TOKEN || "YOUR_HUGGINGFACE_TOKEN_HERE";
-const OPENROUTER_API_KEY = "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";
+const OPENROUTER_API_KEY = "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";
 
 // Log startup info (token masked for security)
 console.log('Server starting...');
@@ -42,7 +42,7 @@ app.post('/', async (req, res) => {
         // Handle chat requests
         if (type === 'chat' || messages) {
             // Route to OpenRouter for specific models
-            const isOpenRouterModel = model.includes(':free') || model.startsWith('qwen/');
+            const isOpenRouterModel = model.includes(':free') || model.startsWith('openai/');
             const chatUrl = isOpenRouterModel 
                 ? 'https://openrouter.ai/api/v1/chat/completions'
                 : 'https://router.huggingface.co/v1/chat/completions';
