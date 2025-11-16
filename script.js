@@ -509,13 +509,16 @@ function loadChatHistory() {
 
 // Render chat history
 function renderChatHistory() {
+    // If history UI is removed, skip rendering gracefully
+    if (!historyItems) return;
+
     historyItems.innerHTML = '';
-    
+
     const saved = localStorage.getItem('chatHistory');
     if (!saved) return;
-    
+
     const localChatHistory = JSON.parse(saved);
-    
+
     localChatHistory.forEach(chat => {
         const item = document.createElement('div');
         item.className = 'history-item';
