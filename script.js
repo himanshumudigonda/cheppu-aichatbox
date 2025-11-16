@@ -19,7 +19,7 @@ let currentMode = 'chat'; // 'chat', 'image', or 'tts'
 // API Configuration
 // IMPORTANT: Replace this with your own HuggingFace API token
 // Get free token from: https://huggingface.co/settings/tokens
-const apiKey = "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"; // Replace with your token
+const apiKey = ""; // Token removed for security - backend handles auth
 const apiUrl = "https://router.huggingface.co/v1/chat/completions";
 const imageApiUrl = "https://api-inference.huggingface.co/models/";
 const ttsApiUrl = "https://api-inference.huggingface.co/models/";
@@ -256,6 +256,7 @@ async function callHuggingFaceApi() {
     const payload = {
         model: selectedModel,
         messages: chatHistory,
+        type: 'chat'
     };
 
     let retries = 3;
@@ -263,11 +264,11 @@ async function callHuggingFaceApi() {
 
     for (let i = 0; i < retries; i++) {
         try {
-            const response = await fetch(apiUrl, {
+            // Use proxy server for all requests
+            const response = await fetch(proxyUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
                 },
                 body: JSON.stringify(payload)
             });

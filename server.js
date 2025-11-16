@@ -36,8 +36,40 @@ app.get('/health', (req, res) => {
 // Main proxy endpoint
 app.post('/', async (req, res) => {
     try {
-        const { model, inputs, type } = req.body;
+        const { model, inputs, type, messages } = req.body;
 
+        // Handle chat requests
+        if (type === 'chat' || messages) {
+            const chatUrl = 'https://router.huggingface.co/v1/chat/completions';
+            
+            console.log(`[${new Date().toISOString()}] Chat request for model: ${model}`);
+            
+            const response = await fetch(chatUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Chat API error: ${response.status}`, errorText);
+                return res.status(response.status).json({
+                    error: `Chat API error: ${response.status}`,
+                    details: errorText
+                });
+            }
+
+            const result = await response.json();
+            return res.json(result);
+        }
+
+        // Handle image and TTS requests
         if (!model || !inputs) {
             return res.status(400).json({ error: 'Missing required fields: model and inputs' });
         }
