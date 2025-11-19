@@ -11,7 +11,7 @@ Usage:
 Creates sizes: 16, 32, 64, 128, 192, 256, 384, 512 and maskable variants (192, 512) with safe padding.
 """
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 SOURCE = Path('cheppu-logo.png')
 OUT_DIR = Path('icons')
@@ -20,9 +20,75 @@ MASKABLE_SIZES = [192, 512]
 PADDING_RATIO = 0.15  # 15% transparent padding for maskable icons
 
 
-def ensure_source():
-    if not SOURCE.exists():
-        raise FileNotFoundError(f"Source image '{SOURCE}' not found. Place your logo PNG at project root.")
+def ensure_or_create_source():
+    """Ensure a source logo exists; if missing, auto-generate a branded base image.
+
+    The generated image is a 1024x1024 PNG with gradient background,
+    circular emblem, waving hand placeholder, and CHEPPU AI text.
+    This is a fallback so icons can be produced quickly.
+    Replace later with a high-resolution transparent logo for best quality.
+    """
+    if SOURCE.exists():
+        return
+    size = 1024
+    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    # Gradient background
+    bg = Image.new('RGBA', (size, size))
+    for y in range(size):
+        # vertical gradient from deep navy to muted purple
+        r = 15 + int(30 * y/size)
+        g = 15 + int(35 * y/size)
+        b = 30 + int(60 * y/size)
+        for x in range(size):
+            bg.putpixel((x, y), (r, g, b, 255))
+    img.alpha_composite(bg)
+
+    draw = ImageDraw.Draw(img)
+    center = size // 2
+    emblem_radius = int(size * 0.32)
+    # Emblem circle
+    draw.ellipse((center - emblem_radius, center - emblem_radius - 80,
+                  center + emblem_radius, center + emblem_radius - 80),
+                 fill=(255, 255, 255, 25), outline=(102, 126, 234, 255), width=12)
+
+    # Simple stylized face rectangle placeholder
+    face_w = emblem_radius * 1.2
+    face_h = emblem_radius * 0.9
+    face_x0 = center - face_w/2
+    face_y0 = center - face_h/2 - 80
+    draw.rounded_rectangle((face_x0, face_y0, face_x0 + face_w, face_y0 + face_h),
+                           radius=face_h*0.2, fill=(240, 180, 80, 255))
+
+    # Waving hand (simplified)
+    hand_r = int(emblem_radius * 0.35)
+    hand_center_x = face_x0 + face_w + hand_r//2 - 20
+    hand_center_y = face_y0 + hand_r
+    draw.ellipse((hand_center_x-hand_r, hand_center_y-hand_r,
+                  hand_center_x+hand_r, hand_center_y+hand_r), fill=(255, 211, 140, 255))
+    # Fingers (lines)
+    for i in range(5):
+        angle_x = hand_center_x - hand_r//2 + i * (hand_r//4)
+        draw.line((angle_x, hand_center_y-hand_r-10, angle_x, hand_center_y+hand_r//2), fill=(230, 180, 110, 255), width=6)
+
+    # Text: CHEPPU AI
+    try:
+        font_main = ImageFont.truetype("arial.ttf", size//8)
+        font_sub = ImageFont.truetype("arial.ttf", size//18)
+    except Exception:
+        font_main = ImageFont.load_default()
+        font_sub = ImageFont.load_default()
+    text_main = "CHEPPU AI"
+    text_sub = "Chat AI Bharatiya Style"
+    # Measure text using textbbox for compatibility
+    tm_box = draw.textbbox((0, 0), text_main, font=font_main)
+    tm_w, tm_h = tm_box[2] - tm_box[0], tm_box[3] - tm_box[1]
+    ts_box = draw.textbbox((0, 0), text_sub, font=font_sub)
+    ts_w, ts_h = ts_box[2] - ts_box[0], ts_box[3] - ts_box[1]
+    draw.text((center - tm_w/2, center + emblem_radius - 40), text_main, font=font_main, fill=(220, 230, 255, 255))
+    draw.text((center - ts_w/2, center + emblem_radius + tm_h - 40), text_sub, font=font_sub, fill=(255, 200, 0, 255))
+
+    img.save(SOURCE)
+    print(f"Fallback source logo generated -> {SOURCE}")
 
 
 def load_source_rgba():
@@ -66,7 +132,7 @@ def make_maskable(img: Image.Image, size: int, name: str):
 
 def main():
     OUT_DIR.mkdir(exist_ok=True)
-    ensure_source()
+    ensure_or_create_source()
     src = load_source_rgba()
 
     for s in SIZES:
