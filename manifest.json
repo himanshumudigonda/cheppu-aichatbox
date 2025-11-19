@@ -30,7 +30,7 @@
       "description": "Start a new AI chat conversation",
       "url": "/?mode=chat",
       "icons": [
-        { "src": "icons/cheppu-icon-192.png", "sizes": "192x192", "type": "image/png" }
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }
       ]
     },
     {
@@ -39,7 +39,7 @@
       "description": "Generate an AI image",
       "url": "/?mode=image",
       "icons": [
-        { "src": "icons/cheppu-icon-192.png", "sizes": "192x192", "type": "image/png" }
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }
       ]
     }
   ],
