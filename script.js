@@ -15,6 +15,7 @@ let chatHistory = [
 ];
 let currentChatId = null;
 let currentMode = 'chat'; // 'chat' or 'image'
+let currentModelIndex = 0; // Track current model in fallback chain
 
 // API Configuration
 const apiKey = ""; // Token removed for security - backend handles auth
@@ -24,6 +25,18 @@ const imageApiUrl = "https://api-inference.huggingface.co/models/";
 // Use proxy server to bypass CORS
 const useProxyServer = true;
 const proxyUrl = "https://cheppu-aichatbox.onrender.com";
+
+// API Timeout (15 seconds for faster response)
+const API_TIMEOUT = 15000;
+
+// Fast model fallback chain (ordered by speed)
+const FALLBACK_MODELS = [
+    'llama-3.1-8b-instant',
+    'gemma2-9b-it',
+    'groq/compound-mini',
+    'llama-3.3-70b-versatile',
+    'mixtral-8x7b-32768'
+];
 
 // DOM Elements
 const welcomeScreen = document.getElementById('welcomeScreen');
@@ -137,37 +150,37 @@ function autoResizeTextarea() {
     messageInput.style.height = messageInput.scrollHeight + 'px';
 }
 
-// Smart model selection based on query
+// Smart model selection based on query - prioritizes SPEED
 function selectBestModel(message) {
     const lowerMsg = message.toLowerCase();
     
-    // Web search indicators
+    // Web search indicators - use fast compound mini
     if (lowerMsg.match(/latest|news|current|today|recent|what's happening|search|find information|weather|stock|price/)) {
-        return 'groq/compound'; // Has web search
+        return 'groq/compound-mini'; // Faster than compound
     }
     
     // Code execution indicators
     if (lowerMsg.match(/run|execute|calculate|compute|python|code|program|script/)) {
-        return 'groq/compound'; // Has code interpreter
+        return 'groq/compound-mini'; // Fast with tools
     }
     
-    // Complex reasoning
-    if (lowerMsg.length > 500 || lowerMsg.match(/analyze|detailed|comprehensive|explain in depth|research/)) {
-        return 'openai/gpt-oss-120b'; // Larger model
+    // Very complex reasoning - only then use slower models
+    if (lowerMsg.length > 800 || lowerMsg.match(/analyze in detail|comprehensive analysis|detailed research|write a long/)) {
+        return 'llama-3.3-70b-versatile'; // Balanced
     }
     
-    // Quick simple queries
-    if (lowerMsg.length < 50 && !lowerMsg.includes('?')) {
-        return 'llama-3.1-8b-instant'; // Fast for simple tasks
+    // Short/Medium queries - FASTEST model
+    if (lowerMsg.length < 200) {
+        return 'llama-3.1-8b-instant'; // Fastest!
     }
     
-    // Creative writing
+    // Creative writing - use fast model
     if (lowerMsg.match(/write.*story|poem|creative|fiction|imagine/)) {
-        return 'qwen/qwen3-32b';
+        return 'gemma2-9b-it'; // Fast and creative
     }
     
-    // Default: balanced speed and quality
-    return 'llama-3.3-70b-versatile';
+    // Default: FASTEST model for best UX
+    return 'llama-3.1-8b-instant';
 }
 
 // Handle sending message
@@ -194,9 +207,9 @@ async function handleSendMessage() {
         // Add to chat history
         chatHistory.push({ role: "user", content: message });
 
-        // Get AI response
+        // Get AI response with automatic fallback
         try {
-            const response = await callHuggingFaceApi(message);
+            const response = await callHuggingFaceApiWithFallback(message);
             
             // Remove typing indicator
             removeTypingIndicator(typingId);
@@ -209,17 +222,14 @@ async function handleSendMessage() {
         } catch (error) {
             removeTypingIndicator(typingId);
             
-            let errorMessage = `Sorry, I ran into an error. Please try again. (Error: ${error.message})`;
-            const selectedModel = aiModelSelect.options[aiModelSelect.selectedIndex].text;
-
-            if (error.status === 400) {
-                errorMessage = `Bad Request (400) for model "${selectedModel}". This model might not be compatible with the chat API. Please try a different model.`;
-            } else if (error.status === 401) {
-                errorMessage = "Authentication Error (401). Please verify the API key.";
-            } else if (error.status === 402) {
-                errorMessage = "Payment Required (402). Your account may not have funds or you've hit a quota.";
-            } else if (error.status === 404) {
-                errorMessage = "Not Found (404). The API endpoint or model doesn't exist.";
+            let errorMessage = `Sorry, all models are currently unavailable. Please try again in a moment. (${error.message})`;
+            
+            if (error.message.includes('timeout')) {
+                errorMessage = "⏱️ Request timed out. The service might be slow. Please try again or select a faster model.";
+            } else if (error.status === 429) {
+                errorMessage = "⚠️ Rate limit reached. Please wait a moment and try again.";
+            } else if (error.status === 503) {
+                errorMessage = "🔄 Service temporarily unavailable. Trying alternative models...";
             }
             
             addMessage('ai', errorMessage);
@@ -262,11 +272,11 @@ async function handleSendMessage() {
     messageInput.focus();
 }
 
-// Call HuggingFace API
-async function callHuggingFaceApi(userMessage) {
-    let selectedModel = aiModelSelect.value;
+// Call HuggingFace API with timeout
+async function callHuggingFaceApi(userMessage, modelOverride = null) {
+    let selectedModel = modelOverride || aiModelSelect.value;
     
-    // Auto model selection
+    // Auto model selection - prioritize speed
     if (selectedModel === 'auto') {
         selectedModel = selectBestModel(userMessage);
         console.log(`🤖 Auto-selected model: ${selectedModel}`);
@@ -278,43 +288,120 @@ async function callHuggingFaceApi(userMessage) {
         type: 'chat'
     };
 
-    let retries = 3;
-    let delay = 1000;
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
-    for (let i = 0; i < retries; i++) {
+    try {
+        // Use proxy server with timeout
+        const response = await fetch(proxyUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const err = new Error(`API Error: ${response.status}`);
+            err.status = response.status;
+            throw err;
+        }
+
+        const result = await response.json();
+        
+        if (result.choices && result.choices[0].message.content) {
+            return { content: result.choices[0].message.content, model: selectedModel };
+        } else {
+            throw new Error("Invalid API response structure.");
+        }
+
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            const timeoutError = new Error(`Timeout after ${API_TIMEOUT/1000}s`);
+            timeoutError.name = 'TimeoutError';
+            timeoutError.model = selectedModel;
+            throw timeoutError;
+        }
+        error.model = selectedModel;
+        throw error;
+    }
+}
+
+// Call API with automatic fallback to faster models
+async function callHuggingFaceApiWithFallback(userMessage) {
+    let selectedModel = aiModelSelect.value;
+    let modelsToTry = [];
+    
+    // Build model priority list
+    if (selectedModel === 'auto') {
+        // Auto mode: try fallback chain
+        modelsToTry = [...FALLBACK_MODELS];
+    } else {
+        // Manual selection: try selected model, then fallback chain
+        modelsToTry = [selectedModel, ...FALLBACK_MODELS.filter(m => m !== selectedModel)];
+    }
+    
+    let lastError = null;
+    
+    // Try each model in sequence
+    for (let i = 0; i < modelsToTry.length; i++) {
+        const model = modelsToTry[i];
+        
         try {
-            // Use proxy server for all requests
-            const response = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const err = new Error(`API Error: ${response.status}`);
-                err.status = response.status;
-                throw err;
-            }
-
-            const result = await response.json();
+            console.log(`🔄 Trying model ${i + 1}/${modelsToTry.length}: ${model}`);
             
-            if (result.choices && result.choices[0].message.content) {
-                return result.choices[0].message.content;
-            } else {
-                throw new Error("Invalid API response structure.");
+            const result = await callHuggingFaceApi(userMessage, model);
+            
+            // Success! Show which model was used if not the first
+            if (i > 0) {
+                showToast(`✅ Using ${getModelDisplayName(model)}`, 'success');
             }
-
+            
+            return result.content;
+            
         } catch (error) {
-            console.warn(`Attempt ${i + 1} failed. Retrying in ${delay}ms...`);
-            if (i === retries - 1) {
+            console.warn(`❌ Model ${model} failed:`, error.message);
+            lastError = error;
+            
+            // Don't retry on authentication or payment errors
+            if (error.status === 401 || error.status === 402) {
                 throw error;
             }
-            await new Promise(res => setTimeout(res, delay));
-            delay *= 2;
+            
+            // If timeout or rate limit, try next model immediately
+            if (error.name === 'TimeoutError' || error.status === 429 || error.status === 503) {
+                if (i < modelsToTry.length - 1) {
+                    showToast(`⏱️ ${getModelDisplayName(model)} slow, trying faster model...`, 'info');
+                    continue;
+                }
+            }
+            
+            // Wait a bit before next attempt for other errors
+            if (i < modelsToTry.length - 1) {
+                await new Promise(res => setTimeout(res, 500));
+            }
         }
     }
+    
+    // All models failed
+    throw lastError || new Error('All models failed');
+}
+
+// Get friendly model name for display
+function getModelDisplayName(model) {
+    const names = {
+        'llama-3.1-8b-instant': 'Llama 8B',
+        'gemma2-9b-it': 'Gemma 9B',
+        'groq/compound-mini': 'Compound Mini',
+        'llama-3.3-70b-versatile': 'Llama 70B',
+        'mixtral-8x7b-32768': 'Mixtral'
+    };
+    return names[model] || model;
 }
 
 // Add message to chat

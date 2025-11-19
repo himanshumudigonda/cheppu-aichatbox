@@ -798,6 +798,14 @@ body {
     color: #ef4444;
 }
 
+.toast-info {
+    border-color: #3b82f6;
+}
+
+.toast-info svg {
+    color: #3b82f6;
+}
+
 @media (max-width: 768px) {
     .toast {
         bottom: 90px;
