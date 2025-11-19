@@ -5,6 +5,7 @@
   "description": "AI-powered chat assistant with image generation capabilities using HuggingFace models. Fast responses with multiple AI models including Llama, Gemma, and Mixtral. Generate images with FLUX and Stable Diffusion.",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "background_color": "#0f0f1e",
   "theme_color": "#667eea",
   "orientation": "portrait-primary",
