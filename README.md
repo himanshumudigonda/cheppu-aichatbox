@@ -92,6 +92,22 @@ Then open `index.html` in browser
 - `render.yaml` - Render config
 - `DEPLOYMENT.md` - Detailed deployment guide
 
+## 🖼️ Branding & Icons
+
+To use the Cheppu AI brand icon across the PWA:
+
+1. Place your source logo PNG (transparent background) in the project root as `cheppu-logo.png`.
+2. Generate the icon set:
+  ```bash
+  pip install pillow  # if not already installed
+  python generate_icons.py
+  ```
+3. This creates multiple sizes under `icons/` (16→512) plus maskable variants used by Android installers.
+4. Manifest (`manifest.json`) already references these files; redeploy after generation.
+5. Re-run PWABuilder to confirm the correct logo appears.
+
+If PWABuilder still shows an old icon, clear its cache or append a cache-busting query (e.g. `https://your-site.netlify.app/manifest.json?rev=1`).
+
 ## 🎯 How to Use
 
 1. **Chat Mode**: Talk with AI models
