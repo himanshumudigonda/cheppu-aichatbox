@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "validate-assets": "node ./scripts/validate_assets.js"
   },
   "keywords": [
     "ai",

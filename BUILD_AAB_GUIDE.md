@@ -119,6 +119,24 @@ app/build/outputs/bundle/release/app-release.aab
 - SHA256 must match your signing key
 - Wait 5-10 minutes for Android to verify
 
+### Network / Packaging Errors (ECONNRESET)
+
+If you see errors like "read ECONNRESET" from PWABuilder or Bubblewrap during packaging, it usually means the packaging service couldn't fetch one or more assets from your site (icons, manifest, sw.js, etc.). This can be caused by transient network issues, your site blocking clients, or the file being temporarily unavailable.
+
+Recommended steps:
+- Run the asset validation script before packaging:
+
+```powershell
+npm run validate-assets
+```
+
+- If an asset fails validation, confirm the file exists at the exact path (case-sensitive) and is accessible over HTTPS.
+- Check your hosting (Netlify) logs for any blocked requests or rate limiting; ensure headers and CORS are not preventing asset fetching.
+- Make sure icons are small and available without authentication. Avoid very large icon files.
+- Retry packaging after a few minutes (packaging services often retry automatically once or twice).
+
+This repository includes a validation helper: `scripts/validate_assets.js` that retries on transient errors and reports failing URLs.
+
 ---
 
 ## Quick Commands
