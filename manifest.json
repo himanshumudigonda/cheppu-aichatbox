@@ -1,25 +1,52 @@
 {
+  "id": "/cheppu-ai",
   "name": "Cheppu AI - Chat & Image Generation",
   "short_name": "Cheppu AI",
-  "description": "AI-powered chat assistant with image generation capabilities using HuggingFace models",
+  "description": "AI-powered chat assistant with image generation capabilities using HuggingFace models. Fast responses with multiple AI models including Llama, Gemma, and Mixtral. Generate images with FLUX and Stable Diffusion.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f1e",
   "theme_color": "#667eea",
   "orientation": "portrait-primary",
   "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["productivity", "utilities", "education"],
@@ -29,21 +56,30 @@
       "short_name": "Chat",
       "description": "Start a new AI chat conversation",
       "url": "/?mode=chat",
-      "icons": [{ "src": "icon-192.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Generate Image",
       "short_name": "Image",
       "description": "Generate an AI image",
       "url": "/?mode=image",
-      "icons": [{ "src": "icon-192.svg", "sizes": "192x192" }]
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "screenshots": [
     {
-      "src": "icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml"
+      "src": "screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Cheppu AI Chat Interface on Desktop"
+    },
+    {
+      "src": "screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Cheppu AI Mobile View"
     }
   ]
 }
