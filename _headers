@@ -1,0 +1,11 @@
+/.well-known/*
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+
+/manifest.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+
+/sw.js
+  Content-Type: application/javascript
+  Service-Worker-Allowed: /

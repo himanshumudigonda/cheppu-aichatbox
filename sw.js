@@ -9,8 +9,9 @@ const STATIC_ASSETS = [
   '/styles.css',
   '/script.js',
   '/manifest.json',
-  '/icon-192.svg',
-  '/icon-512.svg'
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-icon-180.png'
 ];
 
 // Install event - cache static assets
@@ -161,8 +162,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: event.data ? event.data.text() : 'New message from Cheppu AI',
-    icon: '/icon-192.svg',
-    badge: '/icon-192.svg',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     vibrate: [200, 100, 200],
     tag: 'cheppu-notification',
     requireInteraction: false
