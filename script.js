@@ -43,7 +43,42 @@ const imageSuggestions = document.getElementById('imageSuggestions');
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     autoResizeTextarea();
+    registerServiceWorker();
 });
+
+// Register Service Worker for PWA
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    console.log('✅ Service Worker registered successfully:', registration.scope);
+                    
+                    // Check for updates periodically
+                    setInterval(() => {
+                        registration.update();
+                    }, 60000); // Check every minute
+                    
+                    // Listen for updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                console.log('🔄 Service Worker updated');
+                                // Optionally show notification to user
+                                showToast('App updated! Refresh for new features.', 'success');
+                            }
+                        });
+                    });
+                })
+                .catch((error) => {
+                    console.error('❌ Service Worker registration failed:', error);
+                });
+        });
+    } else {
+        console.log('⚠️ Service Workers not supported in this browser');
+    }
+}
 
 // Event Listeners
 function setupEventListeners() {
