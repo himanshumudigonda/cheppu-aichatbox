@@ -5,21 +5,42 @@ plugins {
 
 
 android {
-    namespace 'com.example.typingwebviewapp'
-    compileSdk 33
+    namespace 'com.cheppu.ai'
+    compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.typingwebviewapp"
+        applicationId "com.cheppu.ai"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
+        
+        // Enable multidex for large apps
+        multiDexEnabled true
+    }
+
+    bundle {
+        language {
+            enableSplit = false
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug  // For testing - replace with release signing
+        }
+        debug {
+            minifyEnabled false
+            debuggable true
         }
     }
 
