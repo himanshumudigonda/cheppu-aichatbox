@@ -1,11 +1,13 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.example.typingwebviewapp",
+      "package_name": "com.cheppu.ai",
       "sha256_cert_fingerprints": [
-        "YOUR_SHA256_FINGERPRINT_HERE"
+        "FA:C6:17:45:DC:09:03:78:6F:87:E5:A8:F2:39:3A:38:10:6F:B9:29:D9:F8:7F:3B:70:73:27:27:59:12:42:B0"
       ]
     }
   }
