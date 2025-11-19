@@ -1,0 +1,2 @@
+rootProject.name = "TypingWebViewApp"
+include ":app"
