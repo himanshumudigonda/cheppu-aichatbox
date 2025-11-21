@@ -44,9 +44,8 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const aiModelSelect = document.getElementById('aiModel');
-const imageControls = document.getElementById('imageControls');
-const apiSelect = document.getElementById('apiSelect');
-const modelSelect = document.getElementById('modelSelect');
+const aspectRatioSelector = document.getElementById('aspectRatioSelector');
+const widthSelector = document.getElementById('widthSelector');
 const ratioSelect = document.getElementById('ratioSelect');
 const widthInput = document.getElementById('widthInput');
 const modelTypeSelect = document.getElementById('modelType');
@@ -175,9 +174,8 @@ function setupEventListeners() {
 function toggleMode() {
     // Hide all selectors and suggestions
     chatModelSelector.style.display = 'none';
-    // Hide all selectors and suggestions
-    chatModelSelector.style.display = 'none';
-    imageControls.style.display = 'none';
+    aspectRatioSelector.style.display = 'none';
+    widthSelector.style.display = 'none';
     chatSuggestions.style.display = 'none';
     imageSuggestions.style.display = 'none';
 
@@ -186,7 +184,8 @@ function toggleMode() {
         chatSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Type your message...';
     } else if (currentMode === 'image') {
-        imageControls.style.display = 'block';
+        aspectRatioSelector.style.display = 'flex';
+        widthSelector.style.display = 'flex';
         imageSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Describe the image you want to generate...';
     }
