@@ -54,10 +54,40 @@ const imageSuggestions = document.getElementById('imageSuggestions');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme(); // Initialize theme
     setupEventListeners();
     autoResizeTextarea();
     registerServiceWorker();
 });
+
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    const sunIcon = document.querySelector('.sun-icon');
+    const moonIcon = document.querySelector('.moon-icon');
+    
+    if (theme === 'dark') {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    }
+}
 
 // Register Service Worker for PWA
 function registerServiceWorker() {
@@ -102,6 +132,12 @@ function setupEventListeners() {
             handleSendMessage();
         }
     });
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
 
     newChatBtn.addEventListener('click', startNewChat);
     aiModelSelect.addEventListener('change', startNewChat);
