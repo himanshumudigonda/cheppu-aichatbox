@@ -65,6 +65,7 @@ function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
+    updateMetaThemeColor(savedTheme);
 }
 
 function toggleTheme() {
@@ -74,6 +75,14 @@ function toggleTheme() {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon(newTheme);
+    updateMetaThemeColor(newTheme);
+}
+
+function updateMetaThemeColor(theme) {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f1117' : '#ffffff');
+    }
 }
 
 function updateThemeIcon(theme) {
@@ -573,10 +582,13 @@ function startNewChat() {
 // Mobile menu toggle
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
     sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
 }
 
-// Close sidebar when clicking outside on mobile
+// Close sidebar when clicking outside on mobile (handled by overlay now)
+// Kept for safety if overlay fails
 document.addEventListener('click', (e) => {
     const sidebar = document.getElementById('sidebar');
     const menuBtn = document.getElementById('menuBtn');
@@ -584,8 +596,9 @@ document.addEventListener('click', (e) => {
     if (window.innerWidth <= 768 && 
         sidebar.classList.contains('open') && 
         !sidebar.contains(e.target) && 
-        !menuBtn.contains(e.target)) {
-        sidebar.classList.remove('open');
+        !menuBtn.contains(e.target) &&
+        !e.target.classList.contains('sidebar-overlay')) {
+        // sidebar.classList.remove('open'); // Let overlay handle it
     }
 });
 
