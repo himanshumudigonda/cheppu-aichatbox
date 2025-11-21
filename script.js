@@ -44,8 +44,12 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const aiModelSelect = document.getElementById('aiModel');
+const apiSelector = document.getElementById('apiSelector');
+const modelSelector = document.getElementById('modelSelector');
 const aspectRatioSelector = document.getElementById('aspectRatioSelector');
 const widthSelector = document.getElementById('widthSelector');
+const apiSelect = document.getElementById('apiSelect');
+const modelSelect = document.getElementById('modelSelect');
 const ratioSelect = document.getElementById('ratioSelect');
 const widthInput = document.getElementById('widthInput');
 const modelTypeSelect = document.getElementById('modelType');
@@ -135,13 +139,18 @@ function registerServiceWorker() {
 
 // Event Listeners
 function setupEventListeners() {
-    sendBtn.addEventListener('click', handleSendMessage);
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    });
+    // Ensure the input bar is functional
+    if (messageInput && sendBtn) {
+        sendBtn.addEventListener('click', handleSendMessage);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+    } else {
+        console.error('Input bar elements not found. Ensure #messageInput and #sendBtn exist in the DOM.');
+    }
 
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -171,23 +180,34 @@ function setupEventListeners() {
 }
 
 // Toggle between chat and image mode
+// Ensure input-container visibility during mode switching and message sending
 function toggleMode() {
-    // Hide all selectors and suggestions
+    // Debugging logs added to trace visibility changes
+    console.log(`Switching to mode: ${currentMode}`);
+    console.log('Hiding all selectors and suggestions');
     chatModelSelector.style.display = 'none';
+    apiSelector.style.display = 'none';
+    modelSelector.style.display = 'none';
     aspectRatioSelector.style.display = 'none';
     widthSelector.style.display = 'none';
     chatSuggestions.style.display = 'none';
     imageSuggestions.style.display = 'none';
 
     if (currentMode === 'chat') {
+        console.log('Activating chat mode');
         chatModelSelector.style.display = 'flex';
         chatSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Type your message...';
+        document.querySelector('.input-container').style.display = 'flex';
     } else if (currentMode === 'image') {
+        console.log('Activating image generation mode');
+        apiSelector.style.display = 'flex';
+        modelSelector.style.display = 'flex';
         aspectRatioSelector.style.display = 'flex';
         widthSelector.style.display = 'flex';
         imageSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Describe the image you want to generate...';
+        document.querySelector('.input-container').style.display = 'none';
     }
     startNewChat();
 }
@@ -234,11 +254,13 @@ function selectBestModel(message) {
 // Handle sending message
 async function handleSendMessage() {
     const message = messageInput.value.trim();
+    console.log(`Sending message: ${message}`);
     if (!message) return;
 
-    // Hide welcome screen and show messages
+    console.log('Hiding welcome screen and activating messages container');
     welcomeScreen.style.display = 'none';
     messagesContainer.classList.add('active');
+    document.querySelector('.input-container').style.display = 'flex';
 
     // Add user message
     addMessage('user', message);
