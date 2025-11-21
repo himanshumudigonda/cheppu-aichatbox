@@ -509,6 +509,11 @@ code {
     background: var(--text-tertiary);
 }
 
+/* Desktop Menu Button (Hidden by default) */
+.menu-btn {
+    display: none;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .sidebar {
@@ -621,11 +626,6 @@ code {
         height: 32px;
         padding: 6px;
     }
-}
-
-/* Desktop Menu Button (Hidden) */
-.menu-btn {
-    display: none;
 }
 
 /* Animations */
