@@ -640,7 +640,7 @@ function startNewChat() {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    sidebar.classList.toggle('open');
+    sidebar.classList.toggle('active');
     overlay.classList.toggle('active');
 }
 
