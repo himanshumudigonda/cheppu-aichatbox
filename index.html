@@ -87,17 +87,21 @@
                 <div class="ai-model-selector" id="chatModelSelector">
                     <label for="aiModel">Chat Model:</label>
                     <select id="aiModel">
-                        <option value="auto">🤖 Auto (Fastest)</option>
-                        <option value="llama-3.1-8b-instant">⚡ Llama 3.1 8B Instant (Fastest)</option>
-                        <option value="gemma2-9b-it">⚡ Gemma 2 9B (Fast)</option>
-                        <option value="groq/compound-mini">⚡ Compound Mini (Fast + Tools)</option>
-                        <option value="llama-3.3-70b-versatile">🚀 Llama 3.3 70B (Balanced)</option>
-                        <option value="mixtral-8x7b-32768">🚀 Mixtral 8x7B (Quality)</option>
-                        <option value="qwen/qwen3-32b">🧠 Qwen 3 32B (Smart)</option>
-                        <option value="groq/compound">🔧 Compound (Tools + Web)</option>
-                        <option value="meta-llama/llama-4-scout-17b-16e-instruct">🔬 Llama 4 Scout 17B</option>
-                        <option value="moonshotai/kimi-k2-instruct-0905">💫 Kimi K2 Instruct</option>
-                        <option value="openai/gpt-oss-120b">🎯 GPT OSS 120B (Powerful)</option>
+                        <option value="auto">✨ Auto (Best Performance)</option>
+                        <optgroup label="Popular">
+                            <option value="llama-3.3-70b-versatile">🚀 Llama 3.3 70B</option>
+                            <option value="llama-3.1-8b-instant">⚡ Llama 3.1 8B (Fast)</option>
+                            <option value="mixtral-8x7b-32768">🧠 Mixtral 8x7B</option>
+                        </optgroup>
+                        <optgroup label="New & Experimental">
+                            <option value="qwen/qwen3-32b">Qwen 3 32B</option>
+                            <option value="groq/compound">Groq Compound</option>
+                            <option value="groq/compound-mini">Groq Compound Mini</option>
+                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B</option>
+                            <option value="meta-llama/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick 17B</option>
+                            <option value="moonshotai/kimi-k2-instruct-0905">Kimi K2 Instruct</option>
+                            <option value="openai/gpt-oss-120b">GPT OSS 120B</option>
+                        </optgroup>
                     </select>
                 </div>
                 

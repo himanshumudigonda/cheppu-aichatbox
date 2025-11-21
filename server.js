@@ -41,34 +41,85 @@ app.post('/', async (req, res) => {
 
         // Handle chat requests
         if (type === 'chat' || messages) {
-            // All chat models now use Groq API
-            const chatUrl = 'https://api.groq.com/openai/v1/chat/completions';
-            
-            console.log(`[${new Date().toISOString()}] Chat request for model: ${model} (Groq)`);
-            
-            const response = await fetch(chatUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${GROQ_API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: messages
-                })
-            });
+            // Priority list of models for fallback - comprehensive list from user requirements
+            const modelPriority = [
+                model, // Try requested model first
+                "llama-3.1-8b-instant",
+                "llama-3.3-70b-versatile",
+                "qwen/qwen3-32b",
+                "groq/compound",
+                "groq/compound-mini",
+                "meta-llama/llama-4-maverick-17b-128e-instruct",
+                "meta-llama/llama-4-scout-17b-16e-instruct",
+                "moonshotai/kimi-k2-instruct",
+                "moonshotai/kimi-k2-instruct-0905",
+                "openai/gpt-oss-120b",
+                "openai/gpt-oss-20b",
+                "openai/gpt-oss-safeguard-20b",
+                // Additional reliable fallbacks
+                "gemma2-9b-it",
+                "mixtral-8x7b-32768"
+            ].filter(Boolean); // Remove null/undefined
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`Chat API error: ${response.status}`, errorText);
-                return res.status(response.status).json({
-                    error: `Chat API error: ${response.status}`,
-                    details: errorText
-                });
+            // Remove duplicates
+            const uniqueModels = [...new Set(modelPriority)];
+            
+            console.log(`[${new Date().toISOString()}] Chat request. Attempting models: ${uniqueModels.join(', ')}`);
+
+            let lastError = null;
+            const chatUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+            for (const currentModel of uniqueModels) {
+                try {
+                    console.log(`Trying model: ${currentModel}...`);
+                    
+                    const response = await fetch(chatUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${GROQ_API_KEY}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            model: currentModel,
+                            messages: messages,
+                            temperature: 0.7,
+                            max_tokens: 4096
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.warn(`Model ${currentModel} failed: ${response.status} - ${errorText}`);
+                        
+                        // If it's an auth error, don't retry other models (key is invalid)
+                        if (response.status === 401) {
+                            throw new Error('Invalid API Key');
+                        }
+                        
+                        lastError = new Error(`Model ${currentModel} failed: ${response.status}`);
+                        continue; // Try next model
+                    }
+
+                    const result = await response.json();
+                    console.log(`Success with model: ${currentModel}`);
+                    
+                    // Add metadata about which model was actually used
+                    result.used_model = currentModel;
+                    return res.json(result);
+
+                } catch (err) {
+                    console.error(`Error with model ${currentModel}:`, err.message);
+                    lastError = err;
+                    // Continue to next model
+                }
             }
 
-            const result = await response.json();
-            return res.json(result);
+            // If we get here, all models failed
+            console.error('All models failed');
+            return res.status(500).json({
+                error: 'All AI models are currently unavailable. Please try again later.',
+                details: lastError ? lastError.message : 'Unknown error'
+            });
         }
 
         // Handle image and TTS requests

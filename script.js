@@ -314,7 +314,11 @@ async function callHuggingFaceApi(userMessage, modelOverride = null) {
         const result = await response.json();
         
         if (result.choices && result.choices[0].message.content) {
-            return { content: result.choices[0].message.content, model: selectedModel };
+            // Silently handle model fallback (logging for debug only)
+            if (result.used_model && result.used_model !== selectedModel) {
+                console.log(`Server fell back to model: ${result.used_model}`);
+            }
+            return { content: result.choices[0].message.content, model: result.used_model || selectedModel };
         } else {
             throw new Error("Invalid API response structure.");
         }
@@ -334,62 +338,16 @@ async function callHuggingFaceApi(userMessage, modelOverride = null) {
 
 // Call API with automatic fallback to faster models
 async function callHuggingFaceApiWithFallback(userMessage) {
-    let selectedModel = aiModelSelect.value;
-    let modelsToTry = [];
+    // The server now handles fallback logic for better reliability
+    // We just make one call and let the server try multiple models
     
-    // Build model priority list
-    if (selectedModel === 'auto') {
-        // Auto mode: try fallback chain
-        modelsToTry = [...FALLBACK_MODELS];
-    } else {
-        // Manual selection: try selected model, then fallback chain
-        modelsToTry = [selectedModel, ...FALLBACK_MODELS.filter(m => m !== selectedModel)];
+    try {
+        const result = await callHuggingFaceApi(userMessage);
+        return result.content;
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
     }
-    
-    let lastError = null;
-    
-    // Try each model in sequence
-    for (let i = 0; i < modelsToTry.length; i++) {
-        const model = modelsToTry[i];
-        
-        try {
-            console.log(`🔄 Trying model ${i + 1}/${modelsToTry.length}: ${model}`);
-            
-            const result = await callHuggingFaceApi(userMessage, model);
-            
-            // Success! Show which model was used if not the first
-            if (i > 0) {
-                showToast(`✅ Using ${getModelDisplayName(model)}`, 'success');
-            }
-            
-            return result.content;
-            
-        } catch (error) {
-            console.warn(`❌ Model ${model} failed:`, error.message);
-            lastError = error;
-            
-            // Don't retry on authentication or payment errors
-            if (error.status === 401 || error.status === 402) {
-                throw error;
-            }
-            
-            // If timeout or rate limit, try next model immediately
-            if (error.name === 'TimeoutError' || error.status === 429 || error.status === 503) {
-                if (i < modelsToTry.length - 1) {
-                    showToast(`⏱️ ${getModelDisplayName(model)} slow, trying faster model...`, 'info');
-                    continue;
-                }
-            }
-            
-            // Wait a bit before next attempt for other errors
-            if (i < modelsToTry.length - 1) {
-                await new Promise(res => setTimeout(res, 500));
-            }
-        }
-    }
-    
-    // All models failed
-    throw lastError || new Error('All models failed');
 }
 
 // Get friendly model name for display
