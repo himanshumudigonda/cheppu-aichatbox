@@ -199,7 +199,6 @@ function toggleMode() {
         chatModelSelector.style.display = 'flex';
         chatSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Type your message...';
-        document.querySelector('.input-container').style.display = 'flex';
     } else if (currentMode === 'image') {
         console.log('Activating image generation mode');
         apiSelector.style.display = 'flex';
@@ -208,7 +207,6 @@ function toggleMode() {
         widthSelector.style.display = 'flex';
         imageSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Describe the image you want to generate...';
-        document.querySelector('.input-container').style.display = 'flex';
     }
     startNewChat();
 }

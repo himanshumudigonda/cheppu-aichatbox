@@ -411,6 +411,9 @@ body {
     display: flex !important;
     justify-content: center;
     z-index: 1000;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 .input-wrapper {
