@@ -183,30 +183,26 @@ function setupEventListeners() {
 // Toggle between chat and image mode
 // Ensure input-container visibility during mode switching and message sending
 function toggleMode() {
-    // Debugging logs added to trace visibility changes
-    console.log(`Switching to mode: ${currentMode}`);
-    console.log('Hiding all selectors and suggestions');
-    chatModelSelector.style.display = 'none';
-    apiSelector.style.display = 'none';
-    modelSelector.style.display = 'none';
-    aspectRatioSelector.style.display = 'none';
-    widthSelector.style.display = 'none';
-    chatSuggestions.style.display = 'none';
-    imageSuggestions.style.display = 'none';
+    // Custom UI Toggle
+    const chatControls = document.getElementById('chatControls');
+    const imageControls = document.getElementById('imageControls');
+    const chatSuggestions = document.getElementById('chatSuggestions');
+    const imageSuggestions = document.getElementById('imageSuggestions');
 
     if (currentMode === 'chat') {
         console.log('Activating chat mode');
-        chatModelSelector.style.display = 'flex';
-        chatSuggestions.style.display = 'grid';
-        messageInput.placeholder = 'Type your message...';
+        if (chatControls) chatControls.style.display = 'block';
+        if (imageControls) imageControls.style.display = 'none';
+        if (chatSuggestions) chatSuggestions.style.display = 'grid';
+        if (imageSuggestions) imageSuggestions.style.display = 'none';
+        messageInput.placeholder = 'Message Cheppu...';
     } else if (currentMode === 'image') {
         console.log('Activating image generation mode');
-        apiSelector.style.display = 'flex';
-        modelSelector.style.display = 'flex';
-        aspectRatioSelector.style.display = 'flex';
-        widthSelector.style.display = 'flex';
-        imageSuggestions.style.display = 'grid';
-        messageInput.placeholder = 'Describe the image you want to generate...';
+        if (chatControls) chatControls.style.display = 'none';
+        if (imageControls) imageControls.style.display = 'block';
+        if (chatSuggestions) chatSuggestions.style.display = 'none';
+        if (imageSuggestions) imageSuggestions.style.display = 'grid';
+        messageInput.placeholder = 'Describe an image...';
     }
     startNewChat();
 }
