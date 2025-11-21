@@ -91,6 +91,7 @@ body {
     font-size: 22px;
     font-weight: 700;
     background: var(--primary-gradient);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
@@ -231,6 +232,7 @@ body {
     font-weight: 600;
     margin-bottom: 16px;
     background: var(--primary-gradient);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -2px;
@@ -406,9 +408,9 @@ body {
     right: 0;
     padding: 24px;
     background: linear-gradient(to top, var(--background) 60%, transparent);
-    display: flex;
+    display: flex !important;
     justify-content: center;
-    z-index: 20;
+    z-index: 1000;
 }
 
 .input-wrapper {
@@ -522,10 +524,12 @@ code {
         height: 100%;
         box-shadow: var(--shadow-md);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1000; /* Ensure sidebar is above input bar (z-index: 20) */
-        overflow-y: auto; /* Allow scrolling on small screens */
+        z-index: 1000;
+        /* Ensure sidebar is above input bar (z-index: 20) */
+        overflow-y: auto;
+        /* Allow scrolling on small screens */
     }
-    
+
     .sidebar.open {
         transform: translateX(280px);
     }
@@ -539,7 +543,8 @@ code {
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(4px);
-        z-index: 9; /* Below sidebar (10) but above content */
+        z-index: 9;
+        /* Below sidebar (10) but above content */
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
@@ -549,7 +554,7 @@ code {
         opacity: 1;
         visibility: visible;
     }
-    
+
     .welcome-content h1 {
         font-size: 32px;
         padding: 0 10px;
@@ -559,15 +564,16 @@ code {
         font-size: 16px;
         margin-bottom: 32px;
     }
-    
+
     .messages-container {
-        padding: 60px 16px 100px; /* Added top padding for header */
+        padding: 60px 16px 100px;
+        /* Added top padding for header */
     }
-    
+
     .message:has(.avatar.user) .message-content {
         max-width: 90%;
     }
-    
+
     .theme-toggle {
         top: 16px;
         right: 16px;
@@ -632,13 +638,27 @@ code {
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Toast Notification */

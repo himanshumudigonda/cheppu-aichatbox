@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     autoResizeTextarea();
     registerServiceWorker();
+    toggleMode(); // Ensure correct mode state
 });
 
 // Theme Management
@@ -207,7 +208,7 @@ function toggleMode() {
         widthSelector.style.display = 'flex';
         imageSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Describe the image you want to generate...';
-        document.querySelector('.input-container').style.display = 'none';
+        document.querySelector('.input-container').style.display = 'flex';
     }
     startNewChat();
 }

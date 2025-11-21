@@ -1,4 +1,0 @@
-#Thu Nov 20 09:48:02 IST 2025
-base.0=C\:\\Users\\HIMANSHU\\OneDrive\\Desktop\\projects\\cheppu ai\\app\\build\\intermediates\\dex\\debugAndroidTest\\mergeProjectDexDebugAndroidTest\\0\\classes.dex
-path.0=0/classes.dex
-renamed.0=classes.dex
