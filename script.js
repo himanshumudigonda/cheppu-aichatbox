@@ -18,9 +18,8 @@ let currentMode = 'chat'; // 'chat' or 'image'
 let currentModelIndex = 0; // Track current model in fallback chain
 
 // API Configuration
-const apiKey = ""; // Token removed for security - backend handles auth
+// API Configuration
 const apiUrl = "https://router.huggingface.co/v1/chat/completions";
-const imageApiUrl = "https://api-inference.huggingface.co/models/";
 
 // Use proxy server to bypass CORS
 const useProxyServer = true;
@@ -45,10 +44,13 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const aiModelSelect = document.getElementById('aiModel');
-const imageModelSelect = document.getElementById('imageModel');
+const imageControls = document.getElementById('imageControls');
+const apiSelect = document.getElementById('apiSelect');
+const modelSelect = document.getElementById('modelSelect');
+const ratioSelect = document.getElementById('ratioSelect');
+const widthInput = document.getElementById('widthInput');
 const modelTypeSelect = document.getElementById('modelType');
 const chatModelSelector = document.getElementById('chatModelSelector');
-const imageModelSelector = document.getElementById('imageModelSelector');
 const chatSuggestions = document.getElementById('chatSuggestions');
 const imageSuggestions = document.getElementById('imageSuggestions');
 
@@ -71,7 +73,7 @@ function initTheme() {
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
+
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon(newTheme);
@@ -88,7 +90,7 @@ function updateMetaThemeColor(theme) {
 function updateThemeIcon(theme) {
     const sunIcon = document.querySelector('.sun-icon');
     const moonIcon = document.querySelector('.moon-icon');
-    
+
     if (theme === 'dark') {
         sunIcon.style.display = 'block';
         moonIcon.style.display = 'none';
@@ -105,12 +107,12 @@ function registerServiceWorker() {
             navigator.serviceWorker.register('/sw.js')
                 .then((registration) => {
                     console.log('✅ Service Worker registered successfully:', registration.scope);
-                    
+
                     // Check for updates periodically
                     setInterval(() => {
                         registration.update();
                     }, 60000); // Check every minute
-                    
+
                     // Listen for updates
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
@@ -150,7 +152,7 @@ function setupEventListeners() {
 
     newChatBtn.addEventListener('click', startNewChat);
     aiModelSelect.addEventListener('change', startNewChat);
-    
+
     // Mode switching
     modelTypeSelect.addEventListener('change', (e) => {
         currentMode = e.target.value;
@@ -173,16 +175,18 @@ function setupEventListeners() {
 function toggleMode() {
     // Hide all selectors and suggestions
     chatModelSelector.style.display = 'none';
-    imageModelSelector.style.display = 'none';
+    // Hide all selectors and suggestions
+    chatModelSelector.style.display = 'none';
+    imageControls.style.display = 'none';
     chatSuggestions.style.display = 'none';
     imageSuggestions.style.display = 'none';
-    
+
     if (currentMode === 'chat') {
         chatModelSelector.style.display = 'flex';
         chatSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Type your message...';
     } else if (currentMode === 'image') {
-        imageModelSelector.style.display = 'flex';
+        imageControls.style.display = 'block';
         imageSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Describe the image you want to generate...';
     }
@@ -198,32 +202,32 @@ function autoResizeTextarea() {
 // Smart model selection based on query - prioritizes SPEED
 function selectBestModel(message) {
     const lowerMsg = message.toLowerCase();
-    
+
     // Web search indicators - use fast compound mini
     if (lowerMsg.match(/latest|news|current|today|recent|what's happening|search|find information|weather|stock|price/)) {
         return 'groq/compound-mini'; // Faster than compound
     }
-    
+
     // Code execution indicators
     if (lowerMsg.match(/run|execute|calculate|compute|python|code|program|script/)) {
         return 'groq/compound-mini'; // Fast with tools
     }
-    
+
     // Very complex reasoning - only then use slower models
     if (lowerMsg.length > 800 || lowerMsg.match(/analyze in detail|comprehensive analysis|detailed research|write a long/)) {
         return 'llama-3.3-70b-versatile'; // Balanced
     }
-    
+
     // Short/Medium queries - FASTEST model
     if (lowerMsg.length < 200) {
         return 'llama-3.1-8b-instant'; // Fastest!
     }
-    
+
     // Creative writing - use fast model
     if (lowerMsg.match(/write.*story|poem|creative|fiction|imagine/)) {
         return 'gemma2-9b-it'; // Fast and creative
     }
-    
+
     // Default: FASTEST model for best UX
     return 'llama-3.1-8b-instant';
 }
@@ -255,20 +259,20 @@ async function handleSendMessage() {
         // Get AI response with automatic fallback
         try {
             const response = await callHuggingFaceApiWithFallback(message);
-            
+
             // Remove typing indicator
             removeTypingIndicator(typingId);
-            
+
             // Add AI response
             addMessage('ai', response);
-            
+
             // Add to chat history
             chatHistory.push({ role: "assistant", content: response });
         } catch (error) {
             removeTypingIndicator(typingId);
-            
+
             let errorMessage = `Sorry, all models are currently unavailable. Please try again in a moment. (${error.message})`;
-            
+
             if (error.message.includes('timeout')) {
                 errorMessage = "⏱️ Request timed out. The service might be slow. Please try again or select a faster model.";
             } else if (error.status === 429) {
@@ -276,7 +280,7 @@ async function handleSendMessage() {
             } else if (error.status === 503) {
                 errorMessage = "🔄 Service temporarily unavailable. Trying alternative models...";
             }
-            
+
             addMessage('ai', errorMessage);
             console.error('Error:', error);
         }
@@ -284,17 +288,17 @@ async function handleSendMessage() {
         // Image generation mode
         try {
             const imageUrl = await generateImage(message);
-            
+
             // Remove typing indicator
             removeTypingIndicator(typingId);
-            
+
             // Add image message
             addImageMessage(imageUrl, message);
         } catch (error) {
             removeTypingIndicator(typingId);
-            
+
             let errorMessage = `Sorry, I couldn't generate the image. (${error.message})`;
-            
+
             if (error.name === 'AbortError') {
                 errorMessage = "⏱️ Request timed out. The model might be busy. Please try again.";
             } else if (error.message.includes('402')) {
@@ -306,7 +310,7 @@ async function handleSendMessage() {
             } else if (error.message.includes('401')) {
                 errorMessage = "🔑 Invalid API key. Please check the token configuration.";
             }
-            
+
             addMessage('ai', errorMessage);
             console.error('Image Error:', error);
         }
@@ -320,13 +324,13 @@ async function handleSendMessage() {
 // Call HuggingFace API with timeout
 async function callHuggingFaceApi(userMessage, modelOverride = null) {
     let selectedModel = modelOverride || aiModelSelect.value;
-    
+
     // Auto model selection - prioritize speed
     if (selectedModel === 'auto') {
         selectedModel = selectBestModel(userMessage);
         console.log(`🤖 Auto-selected model: ${selectedModel}`);
     }
-    
+
     const payload = {
         model: selectedModel,
         messages: chatHistory,
@@ -357,7 +361,7 @@ async function callHuggingFaceApi(userMessage, modelOverride = null) {
         }
 
         const result = await response.json();
-        
+
         if (result.choices && result.choices[0].message.content) {
             // Silently handle model fallback (logging for debug only)
             if (result.used_model && result.used_model !== selectedModel) {
@@ -371,7 +375,7 @@ async function callHuggingFaceApi(userMessage, modelOverride = null) {
     } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-            const timeoutError = new Error(`Timeout after ${API_TIMEOUT/1000}s`);
+            const timeoutError = new Error(`Timeout after ${API_TIMEOUT / 1000}s`);
             timeoutError.name = 'TimeoutError';
             timeoutError.model = selectedModel;
             throw timeoutError;
@@ -385,7 +389,7 @@ async function callHuggingFaceApi(userMessage, modelOverride = null) {
 async function callHuggingFaceApiWithFallback(userMessage) {
     // The server now handles fallback logic for better reliability
     // We just make one call and let the server try multiple models
-    
+
     try {
         const result = await callHuggingFaceApi(userMessage);
         return result.content;
@@ -398,11 +402,11 @@ async function callHuggingFaceApiWithFallback(userMessage) {
 // Get friendly model name for display
 function getModelDisplayName(model) {
     const names = {
-        'llama-3.1-8b-instant': 'Llama 8B',
-        'gemma2-9b-it': 'Gemma 9B',
-        'groq/compound-mini': 'Compound Mini',
-        'llama-3.3-70b-versatile': 'Llama 70B',
-        'mixtral-8x7b-32768': 'Mixtral'
+        'llama-3.1-8b-instant': 'Ultra Fast',
+        'gemma2-9b-it': 'Creative Fast',
+        'groq/compound-mini': 'Ultra Fast Compound',
+        'llama-3.3-70b-versatile': 'High Intelligence',
+        'mixtral-8x7b-32768': 'Complex Reasoning'
     };
     return names[model] || model;
 }
@@ -411,10 +415,10 @@ function getModelDisplayName(model) {
 function addMessage(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message';
-    
+
     const avatar = role === 'user' ? 'U' : 'AI';
     const roleName = role === 'user' ? 'You' : 'AI Assistant';
-    
+
     // Add copy button for AI messages
     const copyButton = role === 'ai' ? `
         <button class="copy-btn" onclick="copyMessage(this)" title="Copy message">
@@ -427,7 +431,7 @@ function addMessage(role, content) {
             </svg>
         </button>
     ` : '';
-    
+
     messageDiv.innerHTML = `
         <div class="message-header">
             <div class="avatar ${role}">${avatar}</div>
@@ -436,7 +440,7 @@ function addMessage(role, content) {
         </div>
         <div class="message-content">${formatMessage(content)}</div>
     `;
-    
+
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
@@ -456,7 +460,7 @@ function addTypingIndicator() {
     typingDiv.className = 'message';
     const typingId = 'typing-' + Date.now();
     typingDiv.id = typingId;
-    
+
     typingDiv.innerHTML = `
         <div class="message-header">
             <div class="avatar ai">AI</div>
@@ -468,10 +472,10 @@ function addTypingIndicator() {
             <div class="typing-dot"></div>
         </div>
     `;
-    
+
     messagesContainer.appendChild(typingDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    
+
     return typingId;
 }
 
@@ -484,44 +488,66 @@ function removeTypingIndicator(typingId) {
 }
 
 // Generate image using HuggingFace API
+// Generate image using Fast APIs
 async function generateImage(prompt) {
-    const selectedModel = imageModelSelect.value;
-    
-    // Use proxy server if enabled
-    if (useProxyServer) {
-        try {
-            const response = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: selectedModel,
-                    inputs: prompt,
-                    type: 'image'
-                }),
-            });
+    const api = apiSelect.value;
+    const model = modelSelect.value;
+    const ratio = ratioSelect.value;
+    const width = parseInt(widthInput.value);
 
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
+    // Calculate height based on aspect ratio
+    const ratios = {
+        '1:1': 1,
+        '16:9': 9 / 16,
+        '9:16': 16 / 9,
+        '4:3': 3 / 4,
+        '3:4': 4 / 3
+    };
+    const height = Math.round(width * ratios[ratio]);
+    const seed = Math.floor(Math.random() * 1000000);
 
-            const blob = await response.blob();
-            return URL.createObjectURL(blob);
-        } catch (error) {
-            console.error('Proxy server error:', error);
-            throw error;
-        }
+    let imageUrl;
+
+    // Ultra-fast optimized endpoints prioritized
+    if (api === 'pollinations-turbo') {
+        // Pollinations TURBO mode - fastest option (2-3 seconds)
+        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&enhance=false&seed=${seed}`;
+
+    } else if (api === 'fal-schnell') {
+        // Fal.ai FLUX Schnell - super fast (3-4 seconds)
+        imageUrl = `https://fal.run/fal-ai/fast-turbo-diffusion/image?prompt=${encodeURIComponent(prompt)}&image_size=${width}x${height}&seed=${seed}`;
+
+    } else if (api === 'together') {
+        // Together.ai - free and fast (3-5 seconds)
+        imageUrl = `https://api.together.xyz/v1/images/generations?prompt=${encodeURIComponent(prompt)}&width=${width}&height=${height}&model=black-forest-labs/FLUX.1-schnell-Free&seed=${seed}`;
+
+    } else if (api === 'pollinations') {
+        // Pollinations FLUX mode - balanced speed/quality (5-7 seconds)
+        const pollinationsModel = model === 'turbo' ? 'turbo' : 'flux';
+        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=${pollinationsModel}&nologo=true&seed=${seed}`;
+
+    } else if (api === 'prodia') {
+        // Prodia AI - Fast generation
+        imageUrl = `https://api.prodia.com/generate?prompt=${encodeURIComponent(prompt)}&model=flux-schnell&width=${width}&height=${height}&seed=${seed}`;
     }
-    
-    throw new Error('Direct API access not supported - proxy required');
+
+    // Preload image to ensure it's ready before showing
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(imageUrl);
+        img.onerror = () => reject(new Error('Failed to load generated image'));
+        img.src = imageUrl;
+
+        // Timeout after 15 seconds
+        setTimeout(() => reject(new Error('Image load timed out')), 15000);
+    });
 }
 
 // Add image message to chat
 function addImageMessage(imageUrl, prompt) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message';
-    
+
     messageDiv.innerHTML = `
         <div class="message-header">
             <div class="avatar ai">AI</div>
@@ -540,19 +566,30 @@ function addImageMessage(imageUrl, prompt) {
             </div>
         </div>
     `;
-    
+
+
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Download image function
-window.downloadImage = function(imageUrl, prompt) {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `${prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+window.downloadImage = async function (imageUrl, prompt) {
+    try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Download failed:', error);
+        // Fallback to opening in new tab
+        window.open(imageUrl, '_blank');
+    }
 }
 
 // Start new chat
@@ -572,7 +609,7 @@ function startNewChat() {
             content: "Hello! How can I help you today?"
         }
     ];
-    
+
     messagesContainer.innerHTML = '';
     messagesContainer.classList.remove('active');
     welcomeScreen.style.display = 'flex';
@@ -592,10 +629,10 @@ function toggleSidebar() {
 document.addEventListener('click', (e) => {
     const sidebar = document.getElementById('sidebar');
     const menuBtn = document.getElementById('menuBtn');
-    
-    if (window.innerWidth <= 768 && 
-        sidebar.classList.contains('open') && 
-        !sidebar.contains(e.target) && 
+
+    if (window.innerWidth <= 768 &&
+        sidebar.classList.contains('open') &&
+        !sidebar.contains(e.target) &&
         !menuBtn.contains(e.target) &&
         !e.target.classList.contains('sidebar-overlay')) {
         // sidebar.classList.remove('open'); // Let overlay handle it
@@ -603,22 +640,22 @@ document.addEventListener('click', (e) => {
 });
 
 // Copy message function
-window.copyMessage = function(button) {
+window.copyMessage = function (button) {
     const messageContent = button.closest('.message').querySelector('.message-content');
     const textToCopy = messageContent.innerText || messageContent.textContent;
-    
+
     navigator.clipboard.writeText(textToCopy).then(() => {
         // Show check icon
         const copyIcon = button.querySelector('.copy-icon');
         const checkIcon = button.querySelector('.check-icon');
-        
+
         copyIcon.style.display = 'none';
         checkIcon.style.display = 'block';
         button.classList.add('copied');
-        
+
         // Show toast notification
         showToast('Copied to clipboard!');
-        
+
         // Reset after 2 seconds
         setTimeout(() => {
             copyIcon.style.display = 'block';
@@ -638,7 +675,7 @@ function showToast(message, type = 'success') {
     if (existingToast) {
         existingToast.remove();
     }
-    
+
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
@@ -647,12 +684,12 @@ function showToast(message, type = 'success') {
         </svg>
         <span>${message}</span>
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     // Trigger animation
     setTimeout(() => toast.classList.add('show'), 10);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');

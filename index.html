@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cheppu</title>
-    
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
 
@@ -13,7 +14,7 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png?v=2">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180.png?v=2">
     <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png?v=2">
-    
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#0f1117">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,23 +22,25 @@
     <meta name="apple-mobile-web-app-title" content="Cheppu AI">
     <meta name="mobile-web-app-capable" content="yes">
     <!-- Apple touch icon above replaced with PNG versions -->
-    
+
     <!-- Additional PWA Meta -->
     <meta name="description" content="AI-powered chat assistant with image generation capabilities">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="format-detection" content="telephone=no">
-    
+
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <!-- Mobile Menu Button -->
     <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 12h18M3 6h18M3 18h18"/>
+            <path d="M3 12h18M3 6h18M3 18h18" />
         </svg>
     </button>
 
@@ -51,15 +54,15 @@
                 <div class="logo">
                     <div class="logo-icon">
                         <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                            <circle cx="18" cy="18" r="16" fill="url(#gradient)"/>
-                            <path d="M18 10L14 16H22L18 10Z" fill="white" opacity="0.9"/>
-                            <path d="M18 26L22 20H14L18 26Z" fill="white" opacity="0.9"/>
-                            <circle cx="18" cy="18" r="4" fill="white" opacity="0.3"/>
+                            <circle cx="18" cy="18" r="16" fill="url(#gradient)" />
+                            <path d="M18 10L14 16H22L18 10Z" fill="white" opacity="0.9" />
+                            <path d="M18 26L22 20H14L18 26Z" fill="white" opacity="0.9" />
+                            <circle cx="18" cy="18" r="4" fill="white" opacity="0.3" />
                             <defs>
                                 <linearGradient id="gradient" x1="0" y1="0" x2="36" y2="36">
-                                    <stop offset="0%" stop-color="#667eea"/>
-                                    <stop offset="50%" stop-color="#764ba2"/>
-                                    <stop offset="100%" stop-color="#f093fb"/>
+                                    <stop offset="0%" stop-color="#667eea" />
+                                    <stop offset="50%" stop-color="#764ba2" />
+                                    <stop offset="100%" stop-color="#f093fb" />
                                 </linearGradient>
                             </defs>
                         </svg>
@@ -73,7 +76,7 @@
 
             <button class="new-chat-btn" id="newChatBtn">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 5V15M5 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M10 5V15M5 10H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 </svg>
                 New Chat
             </button>
@@ -86,148 +89,169 @@
                         <option value="image">🎨 Image Generation</option>
                     </select>
                 </div>
-                
+
                 <div class="ai-model-selector" id="chatModelSelector">
                     <label for="aiModel">Chat Model:</label>
                     <select id="aiModel">
                         <option value="auto">✨ Auto (Best Performance)</option>
-                        <optgroup label="Popular">
-                            <option value="llama-3.3-70b-versatile">🚀 Llama 3.3 70B</option>
-                            <option value="llama-3.1-8b-instant">⚡ Llama 3.1 8B (Fast)</option>
-                            <option value="mixtral-8x7b-32768">🧠 Mixtral 8x7B</option>
+                        <optgroup label="Recommended">
+                            <option value="llama-3.3-70b-versatile">🚀 High Intelligence (Balanced)</option>
+                            <option value="llama-3.1-8b-instant">⚡ Ultra Fast (Instant)</option>
+                            <option value="mixtral-8x7b-32768">🧠 Complex Reasoning</option>
                         </optgroup>
-                        <optgroup label="New & Experimental">
-                            <option value="qwen/qwen3-32b">Qwen 3 32B</option>
-                            <option value="groq/compound">Groq Compound</option>
-                            <option value="groq/compound-mini">Groq Compound Mini</option>
-                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B</option>
-                            <option value="meta-llama/llama-4-maverick-17b-128e-instruct">Llama 4 Maverick 17B</option>
-                            <option value="moonshotai/kimi-k2-instruct-0905">Kimi K2 Instruct</option>
-                            <option value="openai/gpt-oss-120b">GPT OSS 120B</option>
-                        </optgroup>
+                        <optgroup label="Experimental">
+                            <option value="qwen/qwen3-32b">Efficient Reasoning</option>
+                            <option value="groq/compound">Fast Compound</option>
+                            <option value="groq/compound-mini">Ultra Fast Compound</option>
+                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">Experimental Fast</option>
+                            <option value="meta-llama/llama-4-maverick-17b-128e-instruct">Experimental Balanced</option>
+                            <option value="moonshotai/kimi-k2-instruct-0905">Long Context</option>
+                            <option value="fast">🚀 Fast (4-6s)</option>
+                            <option value="balanced">⚖️ Balanced (6-8s)</option>
+                            <option value="quality">✨ High Quality (8-12s)</option>
                     </select>
                 </div>
-                
-                <div class="ai-model-selector" id="imageModelSelector" style="display: none;">
-                    <label for="imageModel">Image Model:</label>
-                    <select id="imageModel">
-                        <option value="black-forest-labs/FLUX.1-dev">FLUX.1 Dev</option>
-                        <option value="stabilityai/stable-diffusion-xl-base-1.0">Stable Diffusion XL</option>
-                        <option value="runwayml/stable-diffusion-v1-5">Stable Diffusion 1.5</option>
-                    </select>
-                </div>
-                
 
+                <div class="ai-model-selector">
+                    <label for="ratioSelect">Aspect Ratio:</label>
+                    <select id="ratioSelect">
+                        <option value="1:1">Square (1:1)</option>
+                        <option value="16:9">Landscape (16:9)</option>
+                        <option value="9:16">Portrait (9:16)</option>
+                        <option value="4:3">Classic (4:3)</option>
+                        <option value="3:4">Classic Portrait (3:4)</option>
+                    </select>
+                </div>
+
+                <div class="ai-model-selector">
+                    <label for="widthInput">Width (px):</label>
+                    <select id="widthInput">
+                        <option value="512">512px (Fastest)</option>
+                        <option value="768">768px (Balanced)</option>
+                        <option value="1024" selected>1024px (Standard)</option>
+                        <option value="1280">1280px (High Res)</option>
+                    </select>
+                </div>
             </div>
-        </aside>
 
-        <!-- Main Chat Area -->
-        <main class="main-content">
-            <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
-                <svg class="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <svg class="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-            </button>
-            <div class="chat-container">
-                <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-content">
-                        <h1>Hello, I'm your AI Assistant</h1>
-                        <p>How can I help you today?</p>
-                        
-                        <div class="suggestion-cards" id="chatSuggestions">
-                            <div class="suggestion-card" data-prompt="Explain quantum computing in simple terms">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                                    <path d="M12 8V12L15 15" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Explain quantum computing</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Write a Python function to sort an array">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M16 18L22 12L16 6M8 6L2 12L8 18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>Write a Python function</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="What are the latest trends in AI?">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>Latest AI trends</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Help me plan a study schedule">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/>
-                                    <path d="M16 2V6M8 2V6M3 10H21" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Plan a study schedule</span>
-                            </div>
+
+    </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="main-content">
+        <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+            <svg class="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" style="display: none;">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        </button>
+        <div class="chat-container">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-content">
+                    <h1>Hello, I'm your AI Assistant</h1>
+                    <p>How can I help you today?</p>
+
+                    <div class="suggestion-cards" id="chatSuggestions">
+                        <div class="suggestion-card" data-prompt="Explain quantum computing in simple terms">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10" stroke-width="2" />
+                                <path d="M12 8V12L15 15" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <span>Explain quantum computing</span>
                         </div>
-                        
-                        <div class="suggestion-cards" id="imageSuggestions" style="display: none;">
-                            <div class="suggestion-card" data-prompt="Astronaut riding a horse on Mars">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                                    <path d="M21 15L16 10L5 21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>Astronaut riding a horse</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Futuristic cyberpunk city at night with neon lights">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke-width="2"/>
-                                </svg>
-                                <span>Cyberpunk city at night</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Beautiful fantasy landscape with mountains and waterfalls">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M3 20L9 10L13 15L21 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <span>Fantasy landscape</span>
-                            </div>
-                            <div class="suggestion-card" data-prompt="Cute robot playing with a cat, digital art">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2"/>
-                                    <circle cx="9" cy="10" r="1" fill="currentColor"/>
-                                    <circle cx="15" cy="10" r="1" fill="currentColor"/>
-                                    <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                                <span>Robot playing with cat</span>
-                            </div>
+                        <div class="suggestion-card" data-prompt="Write a Python function to sort an array">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M16 18L22 12L16 6M8 6L2 12L8 18" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            <span>Write a Python function</span>
+                        </div>
+                        <div class="suggestion-card" data-prompt="What are the latest trends in AI?">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            <span>Latest AI trends</span>
+                        </div>
+                        <div class="suggestion-card" data-prompt="Help me plan a study schedule">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2" />
+                                <path d="M16 2V6M8 2V6M3 10H21" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <span>Plan a study schedule</span>
+                        </div>
+                    </div>
+
+                    <div class="suggestion-cards" id="imageSuggestions" style="display: none;">
+                        <div class="suggestion-card" data-prompt="Astronaut riding a horse on Mars">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                                <path d="M21 15L16 10L5 21" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            <span>Astronaut riding a horse</span>
+                        </div>
+                        <div class="suggestion-card" data-prompt="Futuristic cyberpunk city at night with neon lights">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path
+                                    d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"
+                                    stroke-width="2" />
+                            </svg>
+                            <span>Cyberpunk city at night</span>
+                        </div>
+                        <div class="suggestion-card"
+                            data-prompt="Beautiful fantasy landscape with mountains and waterfalls">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M3 20L9 10L13 15L21 5" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            <span>Fantasy landscape</span>
+                        </div>
+                        <div class="suggestion-card" data-prompt="Cute robot playing with a cat, digital art">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2" />
+                                <circle cx="9" cy="10" r="1" fill="currentColor" />
+                                <circle cx="15" cy="10" r="1" fill="currentColor" />
+                                <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                            <span>Robot playing with cat</span>
                         </div>
                     </div>
                 </div>
-
-                <div class="messages-container" id="messagesContainer">
-                    <!-- Messages will be added here dynamically -->
-                </div>
             </div>
 
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea 
-                        id="messageInput" 
-                        placeholder="Type your message..." 
-                        rows="1"
-                    ></textarea>
-                    <button id="sendBtn" class="send-btn">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                </div>
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be added here dynamically -->
             </div>
-        </main>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+                <button id="sendBtn" class="send-btn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
     </div>
 
     <script src="script.js"></script>
@@ -242,4 +266,5 @@
         }
     </script>
 </body>
+
 </html>
