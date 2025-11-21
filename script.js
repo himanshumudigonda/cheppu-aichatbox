@@ -430,7 +430,7 @@ function getModelDisplayName(model) {
 // Add message to chat
 function addMessage(role, content) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'message';
+    messageDiv.className = `message ${role}`; // Add role class for specific styling
 
     const avatar = role === 'user' ? 'U' : 'AI';
     const roleName = role === 'user' ? 'You' : 'AI Assistant';
@@ -448,17 +448,42 @@ function addMessage(role, content) {
         </button>
     ` : '';
 
+    // Use marked.js for AI, simple text for user (or marked for both if preferred)
+    let formattedContent;
+    if (role === 'ai' && typeof marked !== 'undefined') {
+        formattedContent = marked.parse(content);
+    } else {
+        // Fallback or user message
+        formattedContent = content.replace(/\n/g, '<br>');
+    }
+
+    // AI Avatar Sparkle
+    const avatarHtml = role === 'ai' ? `
+        <div class="ai-avatar">
+            <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+            </svg>
+        </div>
+    ` : `<div class="avatar ${role}">${avatar}</div>`;
+
     messageDiv.innerHTML = `
         <div class="message-header">
-            <div class="avatar ${role}">${avatar}</div>
+            ${avatarHtml}
             <span class="message-role">${roleName}</span>
             ${copyButton}
         </div>
-        <div class="message-content">${formatMessage(content)}</div>
+        <div class="message-content">${formattedContent}</div>
     `;
 
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    // Apply syntax highlighting
+    if (role === 'ai' && typeof hljs !== 'undefined') {
+        messageDiv.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+    }
 }
 
 // Format message (handle code blocks, etc.)
@@ -505,10 +530,12 @@ function removeTypingIndicator(typingId) {
 
 // Generate image using HuggingFace API
 // Generate image using Fast APIs
+// Generate image using Fast APIs
 async function generateImage(prompt) {
-    const api = apiSelect.value;
-    const model = modelSelect.value;
-    const ratio = ratioSelect.value;
+    const api = document.getElementById('apiSelect').value;
+    const model = document.getElementById('modelSelect').value;
+    const ratio = document.getElementById('ratioSelect').value;
+    const widthInput = document.getElementById('widthInput');
     const width = parseInt(widthInput.value);
 
     // Calculate height based on aspect ratio
@@ -524,68 +551,48 @@ async function generateImage(prompt) {
 
     let imageUrl;
 
-    // Ultra-fast optimized endpoints prioritized
-    if (api === 'pollinations-turbo') {
-        // Pollinations TURBO mode - fastest option (2-3 seconds)
-        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&enhance=false&seed=${seed}`;
+    try {
+        // Ultra-fast optimized endpoints prioritized
+        if (api === 'pollinations-turbo') {
+            // Pollinations TURBO mode - fastest option (2-3 seconds)
+            imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&enhance=false&seed=${seed}`;
 
-    } else if (api === 'fal-schnell') {
-        // Fal.ai FLUX Schnell - super fast (3-4 seconds)
-        imageUrl = `https://fal.run/fal-ai/fast-turbo-diffusion/image?prompt=${encodeURIComponent(prompt)}&image_size=${width}x${height}&seed=${seed}`;
+        } else {
+            // Pollinations FLUX mode (Default fallback)
+            let enhancedPrompt = prompt;
+            if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5, octane render";
+            if (model === 'anime') enhancedPrompt += ", anime style, studio ghibli, vibrant";
+            if (model === 'flux') enhancedPrompt += ", hyperrealistic, 8k, detailed";
 
-    } else if (api === 'together') {
-        // Together.ai - free and fast (3-5 seconds)
-        imageUrl = `https://api.together.xyz/v1/images/generations?prompt=${encodeURIComponent(prompt)}&width=${width}&height=${height}&model=black-forest-labs/FLUX.1-schnell-Free&seed=${seed}`;
+            imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
+        }
 
-    } else if (api === 'pollinations') {
-        // Pollinations FLUX mode - balanced speed/quality (5-7 seconds)
-        const pollinationsModel = model === 'turbo' ? 'turbo' : 'flux';
-        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=${pollinationsModel}&nologo=true&seed=${seed}`;
-
-    } else if (api === 'prodia') {
-        // Prodia AI - Fast generation
-        imageUrl = `https://api.prodia.com/generate?prompt=${encodeURIComponent(prompt)}&model=flux-schnell&width=${width}&height=${height}&seed=${seed}`;
-    }
-
-    // Preload image to ensure it's ready before showing
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(imageUrl);
-        img.onerror = () => reject(new Error('Failed to load generated image'));
-        img.src = imageUrl;
-
-        // Timeout after 15 seconds
-        setTimeout(() => reject(new Error('Image load timed out')), 15000);
-    });
-}
-
-// Add image message to chat
-function addImageMessage(imageUrl, prompt) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message';
-
-    messageDiv.innerHTML = `
-        <div class="message-header">
-            <div class="avatar ai">AI</div>
-            <span class="message-role">AI Assistant</span>
-        </div>
-        <div class="message-content">
-            <p style="margin-bottom: 12px; color: var(--text-secondary);">Generated image: "${prompt}"</p>
-            <div class="image-container">
-                <img src="${imageUrl}" alt="Generated image" loading="lazy">
-                <button class="download-btn" onclick="downloadImage('${imageUrl}', '${prompt}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
+        // Create image element
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'message ai';
+        imgContainer.innerHTML = `
+            <div class="ai-avatar">
+                <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+            </div>
+            <div class="message-content">
+                <img src="${imageUrl}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                <p style="margin-top: 8px; font-size: 0.85rem; color: #888;">Generated with ${api === 'pollinations-turbo' ? 'Turbo' : 'Flux'}</p>
+                <button class="download-btn" onclick="downloadImage('${imageUrl}', '${prompt.replace(/'/g, "\\'")}')" style="margin-top: 8px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                     Download
                 </button>
             </div>
-        </div>
-    `;
+        `;
 
+        messagesContainer.appendChild(imgContainer);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    } catch (error) {
+        console.error("Image Gen Error:", error);
+        addMessage("Sorry, I couldn't generate that image. Please try again.", 'ai');
+    }
 }
 
 // Download image function
@@ -655,6 +662,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// Copy message function
 // Copy message function
 window.copyMessage = function (button) {
     const messageContent = button.closest('.message').querySelector('.message-content');
