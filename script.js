@@ -1,14 +1,25 @@
-```javascript
 // Global state
 let sessions = JSON.parse(localStorage.getItem('sessions')) || {};
 let currentSessionId = localStorage.getItem('currentSessionId') || null;
 let currentMode = 'chat'; // 'chat' or 'image'
+let currentUser = null;
 
 // API Configuration
 const apiUrl = "https://router.huggingface.co/v1/chat/completions";
 const useProxyServer = true;
 const proxyUrl = "https://cheppu-aichatbox.onrender.com";
 const API_TIMEOUT = 15000;
+
+// Firebase Configuration (Placeholder - User needs to add their config)
+const firebaseConfig = {
+    // TODO: Paste your Firebase Config Here
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
 
 // DOM Elements
 const welcomeScreen = document.getElementById('welcomeScreen');
@@ -19,6 +30,9 @@ const newChatBtn = document.getElementById('newChatBtn');
 const aiModelSelect = document.getElementById('aiModel');
 const chatHistoryList = document.getElementById('chatHistoryList');
 const modelTypeSelect = document.getElementById('modelType');
+const userProfile = document.getElementById('userProfile');
+const profileDropdown = document.getElementById('profileDropdown');
+const googleSignInBtn = document.getElementById('googleSignInBtn');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,16 +41,102 @@ document.addEventListener('DOMContentLoaded', () => {
     autoResizeTextarea();
     registerServiceWorker();
     loadSessions();
-    
+
+    // Initialize Firebase (Mock for now until config is added)
+    initFirebaseAuth();
+
     // Restore last session or start new
     if (currentSessionId && sessions[currentSessionId]) {
         loadChat(currentSessionId);
     } else {
         startNewChat();
     }
-    
+
     toggleMode();
 });
+
+// Firebase Auth Logic
+function initFirebaseAuth() {
+    // Check if Firebase script is loaded
+    if (typeof firebase !== 'undefined') {
+        try {
+            firebase.initializeApp(firebaseConfig);
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    handleUserLogin(user);
+                } else {
+                    handleUserLogout();
+                }
+            });
+        } catch (e) {
+            console.log("Firebase not configured yet.");
+        }
+    }
+
+    // Mock Login for Demo (Remove this when real Firebase is added)
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener('click', () => {
+            // Simulate login
+            const mockUser = {
+                displayName: "Cheppu User",
+                email: "user@example.com",
+                photoURL: `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${Math.random()}`
+            };
+            handleUserLogin(mockUser);
+        });
+    }
+}
+
+function handleUserLogin(user) {
+    currentUser = user;
+    const userNameEl = document.getElementById('userName');
+    const userStatusEl = document.getElementById('userStatus');
+    const avatarEl = document.getElementById('userAvatar');
+
+    if (userNameEl) userNameEl.textContent = user.displayName;
+    if (userStatusEl) userStatusEl.textContent = 'Pro Plan';
+
+    if (avatarEl) {
+        avatarEl.innerHTML = `<img src="${user.photoURL || getRandomAvatar(user.displayName)}" alt="User">`;
+    }
+
+    if (googleSignInBtn) googleSignInBtn.style.display = 'none';
+    showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
+}
+
+function handleUserLogout() {
+    currentUser = null;
+    const userNameEl = document.getElementById('userName');
+    const userStatusEl = document.getElementById('userStatus');
+    const avatarEl = document.getElementById('userAvatar');
+
+    if (userNameEl) userNameEl.textContent = 'Guest User';
+    if (userStatusEl) userStatusEl.textContent = 'Sign in to sync';
+    if (avatarEl) avatarEl.innerHTML = 'U';
+
+    if (googleSignInBtn) googleSignInBtn.style.display = 'flex';
+    if (profileDropdown) profileDropdown.classList.remove('active');
+}
+
+function signOut() {
+    if (typeof firebase !== 'undefined') {
+        firebase.auth().signOut();
+    }
+    handleUserLogout();
+}
+
+function toggleProfileDropdown() {
+    if (currentUser) {
+        if (profileDropdown) profileDropdown.classList.toggle('active');
+    } else {
+        // If not logged in, trigger login
+        if (googleSignInBtn) googleSignInBtn.click();
+    }
+}
+
+function getRandomAvatar(seed) {
+    return `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${seed || Math.random()}`;
+}
 
 // Theme Management
 function initTheme() {
@@ -54,6 +154,7 @@ function toggleTheme() {
     updateThemeIcon(newTheme);
     updateMetaThemeColor(newTheme);
 }
+
 function updateMetaThemeColor(theme) {
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
@@ -65,21 +166,21 @@ function updateThemeIcon(theme) {
     const sunIcon = document.querySelector('.sun-icon');
     const moonIcon = document.querySelector('.moon-icon');
     if (theme === 'dark') {
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
+        if (sunIcon) sunIcon.style.display = 'block';
+        if (moonIcon) moonIcon.style.display = 'none';
     } else {
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
+        if (sunIcon) sunIcon.style.display = 'none';
+        if (moonIcon) moonIcon.style.display = 'block';
     }
 }
 
 // Session Management (Auto-Save)
 function saveSession() {
     if (!currentSessionId) return;
-    
+
     // Update timestamp
     sessions[currentSessionId].lastModified = Date.now();
-    
+
     // Generate title if new
     if (sessions[currentSessionId].messages.length > 0 && sessions[currentSessionId].title === 'New Chat') {
         const firstMsg = sessions[currentSessionId].messages.find(m => m.role === 'user');
@@ -87,7 +188,7 @@ function saveSession() {
             sessions[currentSessionId].title = firstMsg.content.substring(0, 30) + (firstMsg.content.length > 30 ? '...' : '');
         }
     }
-    
+
     localStorage.setItem('sessions', JSON.stringify(sessions));
     localStorage.setItem('currentSessionId', currentSessionId);
     renderHistoryList();
@@ -98,14 +199,15 @@ function loadSessions() {
 }
 
 function renderHistoryList() {
+    if (!chatHistoryList) return;
     chatHistoryList.innerHTML = '';
-    
+
     // Sort by last modified
     const sortedSessions = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified);
-    
+
     sortedSessions.forEach(session => {
         const item = document.createElement('div');
-        item.className = `history - item ${ session.id === currentSessionId ? 'active' : '' } `;
+        item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
         item.textContent = session.title;
         item.onclick = () => loadChat(session.id);
         chatHistoryList.appendChild(item);
@@ -115,17 +217,17 @@ function renderHistoryList() {
 function loadChat(sessionId) {
     currentSessionId = sessionId;
     const session = sessions[sessionId];
-    
+
     // Clear UI
-    messagesContainer.innerHTML = '';
-    
+    if (messagesContainer) messagesContainer.innerHTML = '';
+
     if (session.messages.length === 0) {
-        welcomeScreen.style.display = 'flex';
-        messagesContainer.classList.remove('active');
+        if (welcomeScreen) welcomeScreen.style.display = 'flex';
+        if (messagesContainer) messagesContainer.classList.remove('active');
     } else {
-        welcomeScreen.style.display = 'none';
-        messagesContainer.classList.add('active');
-        
+        if (welcomeScreen) welcomeScreen.style.display = 'none';
+        if (messagesContainer) messagesContainer.classList.add('active');
+
         // Render messages
         session.messages.forEach(msg => {
             if (msg.role !== 'system') {
@@ -138,16 +240,16 @@ function loadChat(sessionId) {
             }
         });
     }
-    
+
     localStorage.setItem('currentSessionId', currentSessionId);
     renderHistoryList();
-    
+
     // Close sidebar on mobile
     if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
+        if (sidebar) sidebar.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
     }
 }
 
@@ -161,7 +263,7 @@ function startNewChat() {
         ],
         lastModified: Date.now()
     };
-    
+
     loadChat(newId);
 }
 
@@ -180,22 +282,33 @@ function setupEventListeners() {
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
-    newChatBtn.addEventListener('click', startNewChat);
-    
-    modelTypeSelect.addEventListener('change', (e) => {
-        currentMode = e.target.value;
-        toggleMode();
-    });
+    if (newChatBtn) newChatBtn.addEventListener('click', startNewChat);
+
+    if (modelTypeSelect) {
+        modelTypeSelect.addEventListener('change', (e) => {
+            currentMode = e.target.value;
+            toggleMode();
+        });
+    }
 
     document.querySelectorAll('.suggestion-card').forEach(card => {
         card.addEventListener('click', () => {
             const prompt = card.getAttribute('data-prompt');
-            messageInput.value = prompt;
-            handleSendMessage();
+            if (messageInput) {
+                messageInput.value = prompt;
+                handleSendMessage();
+            }
         });
     });
 
-    messageInput.addEventListener('input', autoResizeTextarea);
+    if (messageInput) messageInput.addEventListener('input', autoResizeTextarea);
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (userProfile && profileDropdown && !userProfile.contains(e.target) && !profileDropdown.contains(e.target)) {
+            profileDropdown.classList.remove('active');
+        }
+    });
 }
 
 function toggleMode() {
@@ -209,38 +322,42 @@ function toggleMode() {
         if (imageControls) imageControls.style.display = 'none';
         if (chatSuggestions) chatSuggestions.style.display = 'grid';
         if (imageSuggestions) imageSuggestions.style.display = 'none';
-        messageInput.placeholder = 'Message Cheppu...';
+        if (messageInput) messageInput.placeholder = 'Message Cheppu...';
     } else if (currentMode === 'image') {
         if (chatControls) chatControls.style.display = 'none';
         if (imageControls) imageControls.style.display = 'block';
         if (chatSuggestions) chatSuggestions.style.display = 'none';
         if (imageSuggestions) imageSuggestions.style.display = 'grid';
-        messageInput.placeholder = 'Describe an image...';
+        if (messageInput) messageInput.placeholder = 'Describe an image...';
     }
 }
 
 function autoResizeTextarea() {
-    messageInput.style.height = 'auto';
-    messageInput.style.height = messageInput.scrollHeight + 'px';
+    if (messageInput) {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = messageInput.scrollHeight + 'px';
+    }
 }
 
 // Handle sending message
 async function handleSendMessage() {
+    if (!messageInput) return;
     const message = messageInput.value.trim();
     if (!message) return;
 
-    welcomeScreen.style.display = 'none';
-    messagesContainer.classList.add('active');
-    document.querySelector('.input-container').style.display = 'flex';
+    if (welcomeScreen) welcomeScreen.style.display = 'none';
+    if (messagesContainer) messagesContainer.classList.add('active');
+    const inputContainer = document.querySelector('.input-container');
+    if (inputContainer) inputContainer.style.display = 'flex';
 
     // Add user message
     addMessageToUI('user', message);
     sessions[currentSessionId].messages.push({ role: "user", content: message });
     saveSession();
-    
+
     messageInput.value = '';
     autoResizeTextarea();
-    sendBtn.disabled = true;
+    if (sendBtn) sendBtn.disabled = true;
 
     const typingId = addTypingIndicator();
 
@@ -253,7 +370,7 @@ async function handleSendMessage() {
             saveSession();
         } catch (error) {
             removeTypingIndicator(typingId);
-            const errorMsg = `Sorry, something went wrong. (${ error.message })`;
+            const errorMsg = `Sorry, something went wrong. (${error.message})`;
             addMessageToUI('ai', errorMsg);
         }
     } else if (currentMode === 'image') {
@@ -263,18 +380,18 @@ async function handleSendMessage() {
             // Image saving handled in generateImage
         } catch (error) {
             removeTypingIndicator(typingId);
-            addMessageToUI('ai', `Image generation failed: ${ error.message } `);
+            addMessageToUI('ai', `Image generation failed: ${error.message}`);
         }
     }
 
-    sendBtn.disabled = false;
+    if (sendBtn) sendBtn.disabled = false;
     messageInput.focus();
 }
 
 // API Logic
 async function callHuggingFaceApiWithFallback(userMessage) {
-    const selectedModel = aiModelSelect.value === 'auto' ? 'llama-3.1-8b-instant' : aiModelSelect.value;
-    
+    const selectedModel = aiModelSelect && aiModelSelect.value === 'auto' ? 'llama-3.1-8b-instant' : (aiModelSelect ? aiModelSelect.value : 'llama-3.1-8b-instant');
+
     const payload = {
         model: selectedModel,
         messages: sessions[currentSessionId].messages,
@@ -292,8 +409,8 @@ async function callHuggingFaceApiWithFallback(userMessage) {
             signal: controller.signal
         });
         clearTimeout(timeoutId);
-        
-        if (!response.ok) throw new Error(`API Error: ${ response.status } `);
+
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
         const result = await response.json();
         return result.choices[0].message.content;
     } catch (error) {
@@ -304,30 +421,33 @@ async function callHuggingFaceApiWithFallback(userMessage) {
 
 // UI Functions
 function addMessageToUI(role, content) {
+    if (!messagesContainer) return;
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${ role } `;
+    messageDiv.className = `message ${role}`;
 
     const avatarHtml = role === 'ai' ? `
-    < div class="ai-avatar" >
-        <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-        </svg>
-        </div >
-    ` : ` < div class="avatar ${role}" > U</div > `;
+        <div class="ai-avatar">
+            <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+            </svg>
+        </div>
+    ` : `<div class="avatar ${role}">
+            ${currentUser ? `<img src="${currentUser.photoURL}" alt="U">` : 'U'}
+         </div>`;
 
-    const roleName = role === 'user' ? 'You' : 'AI Assistant';
-    
+    const roleName = role === 'user' ? (currentUser ? currentUser.displayName.split(' ')[0] : 'You') : 'AI Assistant';
+
     // Parse Markdown
     let formattedContent = role === 'ai' && typeof marked !== 'undefined' ? marked.parse(content) : content.replace(/\n/g, '<br>');
 
     messageDiv.innerHTML = `
-        < div class="message-header" >
-            ${ avatarHtml }
-<span class="message-role">${roleName}</span>
-            ${ role === 'ai' ? createActionButtons() : '' }
-        </div >
-    <div class="message-content">${formattedContent}</div>
-`;
+        <div class="message-header">
+            ${avatarHtml}
+            <span class="message-role">${roleName}</span>
+            ${role === 'ai' ? createActionButtons() : ''}
+        </div>
+        <div class="message-content">${formattedContent}</div>
+    `;
 
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -342,7 +462,7 @@ function addMessageToUI(role, content) {
 
 function createActionButtons() {
     return `
-    < button class="copy-btn" onclick = "copyMessage(this)" title = "Copy message" >
+        <button class="copy-btn" onclick="copyMessage(this)" title="Copy message">
             <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -350,7 +470,7 @@ function createActionButtons() {
             <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
                 <polyline points="20 6 9 17 4 12"/>
             </svg>
-        </button >
+        </button>
     `;
 }
 
@@ -361,60 +481,60 @@ function enhanceCodeBlock(codeBlock) {
     codeBlock.classList.forEach(cls => {
         if (cls.startsWith('language-')) lang = cls.replace('language-', '');
     });
-    
+
     const header = document.createElement('div');
     header.className = 'code-header';
-    
+
     let previewBtn = '';
     if (lang === 'html' || lang === 'xml') {
         previewBtn = `
-    < button class="preview-btn" onclick = "previewCode(this)" >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-            <circle cx="12" cy="12" r="3" />
-        </svg>
-Preview
-            </button >
-    `;
+            <button class="preview-btn" onclick="previewCode(this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                Preview
+            </button>
+        `;
     }
 
     header.innerHTML = `
-    < span class="code-lang" > ${ lang }</span >
+        <span class="code-lang">${lang}</span>
         <div style="display:flex; align-items:center;">
             ${previewBtn}
             <button class="copy-code-btn" onclick="copyCode(this)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
                 Copy
             </button>
         </div>
-`;
+    `;
     pre.insertBefore(header, codeBlock);
 }
 
 // Preview Code Function
-window.previewCode = function(btn) {
+window.previewCode = function (btn) {
     const pre = btn.closest('.code-header').nextElementSibling;
     const code = pre.querySelector('code').innerText;
-    
+
     // Check if preview already exists
     let previewContainer = pre.nextElementSibling;
     if (previewContainer && previewContainer.classList.contains('preview-container')) {
         previewContainer.remove(); // Toggle off
         return;
     }
-    
+
     previewContainer = document.createElement('div');
     previewContainer.className = 'preview-container';
-    
+
     const iframe = document.createElement('iframe');
     iframe.className = 'preview-frame';
     previewContainer.appendChild(iframe);
-    
+
     pre.parentNode.insertBefore(previewContainer, pre.nextSibling);
-    
+
     // Write content to iframe
     const doc = iframe.contentWindow.document;
     doc.open();
@@ -422,7 +542,7 @@ window.previewCode = function(btn) {
     doc.close();
 }
 
-window.copyCode = function(btn) {
+window.copyCode = function (btn) {
     const pre = btn.closest('.code-header').nextElementSibling;
     const code = pre.querySelector('code').innerText;
     navigator.clipboard.writeText(code).then(() => {
@@ -432,7 +552,7 @@ window.copyCode = function(btn) {
     });
 }
 
-window.copyMessage = function(btn) {
+window.copyMessage = function (btn) {
     const content = btn.closest('.message').querySelector('.message-content').innerText;
     navigator.clipboard.writeText(content).then(() => {
         showToast('Copied to clipboard!');
@@ -440,17 +560,18 @@ window.copyMessage = function(btn) {
 }
 
 function addTypingIndicator() {
+    if (!messagesContainer) return;
     const typingDiv = document.createElement('div');
     typingDiv.className = 'message';
     const typingId = 'typing-' + Date.now();
     typingDiv.id = typingId;
     typingDiv.innerHTML = `
-    < div class="message-header" >
+        <div class="message-header">
             <div class="ai-avatar"><svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
             <span class="message-role">AI Assistant</span>
-        </div >
-    <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
-`;
+        </div>
+        <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    `;
     messagesContainer.appendChild(typingDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
     return typingId;
@@ -462,28 +583,29 @@ function removeTypingIndicator(id) {
 }
 
 async function generateImage(prompt) {
-    const api = document.getElementById('apiSelect').value;
-    const model = document.getElementById('modelSelect').value;
+    const api = document.getElementById('apiSelect') ? document.getElementById('apiSelect').value : 'pollinations-flux';
+    const model = document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'flux';
     const width = 1024;
     const height = 1024;
     const seed = Math.floor(Math.random() * 1000000);
-    
+
     let imageUrl;
     if (api === 'pollinations-turbo') {
         imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&seed=${seed}`;
     } else {
-    let enhancedPrompt = prompt;
-    if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5";
-    if (model === 'anime') enhancedPrompt += ", anime style, vibrant";
-    imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
-}
+        let enhancedPrompt = prompt;
+        if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5";
+        if (model === 'anime') enhancedPrompt += ", anime style, vibrant";
+        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
+    }
 
-addImageMessageToUI(imageUrl, prompt);
-sessions[currentSessionId].messages.push({ role: "assistant", content: imageUrl, isImage: true, prompt: prompt });
-saveSession();
+    addImageMessageToUI(imageUrl, prompt);
+    sessions[currentSessionId].messages.push({ role: "assistant", content: imageUrl, isImage: true, prompt: prompt });
+    saveSession();
 }
 
 function addImageMessageToUI(imageUrl, prompt) {
+    if (!messagesContainer) return;
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message ai';
     msgDiv.innerHTML = `
@@ -491,7 +613,7 @@ function addImageMessageToUI(imageUrl, prompt) {
         <div class="message-content">
             <img src="${imageUrl}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
             <p style="margin-top: 8px; font-size: 0.85rem; color: #888;">${prompt}</p>
-            <button class="download-btn" onclick="downloadImage('${imageUrl}', '${prompt.replace(/'/g, "\\'")}')" style="margin-top: 8px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: inherit; cursor: display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">
+            <button class="download-btn" onclick="downloadImage('${imageUrl}', '${prompt.replace(/'/g, "\\'")}')" style="margin-top: 8px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 Download
             </button>
@@ -534,4 +656,3 @@ function showToast(message) {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
-```

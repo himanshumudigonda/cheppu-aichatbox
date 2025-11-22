@@ -306,11 +306,12 @@ body {
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 8px;
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s;
+    user-select: none;
 }
 
 .user-profile:hover {
@@ -318,32 +319,97 @@ body {
 }
 
 .avatar {
-    width: 28px;
-    height: 28px;
-    background: var(--bg-tertiary);
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
     font-weight: 600;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-subtle);
+    font-size: 14px;
+    color: white;
+    overflow: hidden;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .user-info {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    /* Prevent overflow */
 }
 
 .name {
-    font-size: 13px;
     font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .status {
     font-size: 11px;
     color: var(--text-tertiary);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 8px;
+    display: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    z-index: 20;
+}
+
+.profile-dropdown.active {
+    display: block;
+    animation: slideUp 0.2s ease-out;
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--danger);
+    font-size: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 68, 68, 0.1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Main Content */
