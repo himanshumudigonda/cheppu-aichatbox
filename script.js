@@ -10,18 +10,21 @@ const useProxyServer = true;
 const proxyUrl = "https://cheppu-aichatbox.onrender.com";
 const API_TIMEOUT = 15000;
 
-// Firebase Configuration (Placeholder - User needs to add their config)
+// Firebase Configuration
 const firebaseConfig = {
-    // TODO: Paste your Firebase Config Here
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyB0Fe-54kBPtVPgvQxU5T7wgRyjRzMrIY0",
+    authDomain: "cheppu-ai.firebaseapp.com",
+    projectId: "cheppu-ai",
+    storageBucket: "cheppu-ai.firebasestorage.app",
+    messagingSenderId: "877736040132",
+    appId: "1:877736040132:web:9d463454a156ef5ed69b91",
+    measurementId: "G-K8BC7BG0HN"
 };
 
 // DOM Elements
+const loginOverlay = document.getElementById('loginOverlay');
+const loginBtn = document.getElementById('loginBtn');
+const appLayout = document.getElementById('appLayout');
 const welcomeScreen = document.getElementById('welcomeScreen');
 const messagesContainer = document.getElementById('messagesContainer');
 const messageInput = document.getElementById('messageInput');
@@ -32,63 +35,75 @@ const chatHistoryList = document.getElementById('chatHistoryList');
 const modelTypeSelect = document.getElementById('modelType');
 const userProfile = document.getElementById('userProfile');
 const profileDropdown = document.getElementById('profileDropdown');
-const googleSignInBtn = document.getElementById('googleSignInBtn');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Check for PWA launch
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('Running in standalone mode');
+    }
+
     initTheme();
     setupEventListeners();
     autoResizeTextarea();
     registerServiceWorker();
-    loadSessions();
 
-    // Initialize Firebase (Mock for now until config is added)
+    // Initialize Firebase & Auth Flow
     initFirebaseAuth();
 
-    // Restore last session or start new
-    if (currentSessionId && sessions[currentSessionId]) {
-        loadChat(currentSessionId);
-    } else {
-        startNewChat();
-    }
-
+    // Load sessions (will be hidden until login)
+    loadSessions();
     toggleMode();
 });
 
 // Firebase Auth Logic
 function initFirebaseAuth() {
-    // Check if Firebase script is loaded
-    if (typeof firebase !== 'undefined') {
-        try {
-            firebase.initializeApp(firebaseConfig);
-            firebase.auth().onAuthStateChanged(user => {
-                if (user) {
-                    handleUserLogin(user);
-                } else {
-                    handleUserLogout();
-                }
-            });
-        } catch (e) {
-            console.log("Firebase not configured yet.");
-        }
+    if (typeof firebase === 'undefined') {
+        console.error("Firebase SDK not loaded");
+        return;
     }
 
-    // Mock Login for Demo (Remove this when real Firebase is added)
-    if (googleSignInBtn) {
-        googleSignInBtn.addEventListener('click', () => {
-            // Simulate login
-            const mockUser = {
-                displayName: "Cheppu User",
-                email: "user@example.com",
-                photoURL: `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${Math.random()}`
-            };
-            handleUserLogin(mockUser);
+    try {
+        firebase.initializeApp(firebaseConfig);
+
+        // Auth State Listener
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                handleUserLogin(user);
+            } else {
+                handleUserLogout();
+            }
         });
+
+        // Login Button Handler
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                firebase.auth().signInWithPopup(provider)
+                    .catch((error) => {
+                        console.error("Login Error:", error);
+                        showToast(`Login failed: ${error.message}`);
+                    });
+            });
+        }
+
+    } catch (e) {
+        console.error("Firebase Initialization Error:", e);
     }
 }
 
 function handleUserLogin(user) {
     currentUser = user;
+
+    // UI Transition: Hide Login, Show App
+    if (loginOverlay) loginOverlay.classList.add('hidden');
+    if (appLayout) {
+        appLayout.style.display = 'flex';
+        // Small delay to allow display:flex to apply before opacity transition
+        setTimeout(() => appLayout.classList.add('visible'), 50);
+    }
+
+    // Update User Profile
     const userNameEl = document.getElementById('userName');
     const userStatusEl = document.getElementById('userStatus');
     const avatarEl = document.getElementById('userAvatar');
@@ -100,21 +115,26 @@ function handleUserLogin(user) {
         avatarEl.innerHTML = `<img src="${user.photoURL || getRandomAvatar(user.displayName)}" alt="User">`;
     }
 
-    if (googleSignInBtn) googleSignInBtn.style.display = 'none';
+    // Restore last session or start new
+    if (currentSessionId && sessions[currentSessionId]) {
+        loadChat(currentSessionId);
+    } else {
+        startNewChat();
+    }
+
     showToast(`Welcome back, ${user.displayName.split(' ')[0]}!`);
 }
 
 function handleUserLogout() {
     currentUser = null;
-    const userNameEl = document.getElementById('userName');
-    const userStatusEl = document.getElementById('userStatus');
-    const avatarEl = document.getElementById('userAvatar');
 
-    if (userNameEl) userNameEl.textContent = 'Guest User';
-    if (userStatusEl) userStatusEl.textContent = 'Sign in to sync';
-    if (avatarEl) avatarEl.innerHTML = 'U';
+    // UI Transition: Show Login, Hide App
+    if (loginOverlay) loginOverlay.classList.remove('hidden');
+    if (appLayout) {
+        appLayout.classList.remove('visible');
+        setTimeout(() => appLayout.style.display = 'none', 500);
+    }
 
-    if (googleSignInBtn) googleSignInBtn.style.display = 'flex';
     if (profileDropdown) profileDropdown.classList.remove('active');
 }
 
@@ -122,16 +142,10 @@ function signOut() {
     if (typeof firebase !== 'undefined') {
         firebase.auth().signOut();
     }
-    handleUserLogout();
 }
 
 function toggleProfileDropdown() {
-    if (currentUser) {
-        if (profileDropdown) profileDropdown.classList.toggle('active');
-    } else {
-        // If not logged in, trigger login
-        if (googleSignInBtn) googleSignInBtn.click();
-    }
+    if (profileDropdown) profileDropdown.classList.toggle('active');
 }
 
 function getRandomAvatar(seed) {
@@ -174,14 +188,12 @@ function updateThemeIcon(theme) {
     }
 }
 
-// Session Management (Auto-Save)
+// Session Management
 function saveSession() {
     if (!currentSessionId) return;
 
-    // Update timestamp
     sessions[currentSessionId].lastModified = Date.now();
 
-    // Generate title if new
     if (sessions[currentSessionId].messages.length > 0 && sessions[currentSessionId].title === 'New Chat') {
         const firstMsg = sessions[currentSessionId].messages.find(m => m.role === 'user');
         if (firstMsg) {
@@ -202,7 +214,6 @@ function renderHistoryList() {
     if (!chatHistoryList) return;
     chatHistoryList.innerHTML = '';
 
-    // Sort by last modified
     const sortedSessions = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified);
 
     sortedSessions.forEach(session => {
@@ -218,7 +229,6 @@ function loadChat(sessionId) {
     currentSessionId = sessionId;
     const session = sessions[sessionId];
 
-    // Clear UI
     if (messagesContainer) messagesContainer.innerHTML = '';
 
     if (session.messages.length === 0) {
@@ -228,10 +238,8 @@ function loadChat(sessionId) {
         if (welcomeScreen) welcomeScreen.style.display = 'none';
         if (messagesContainer) messagesContainer.classList.add('active');
 
-        // Render messages
         session.messages.forEach(msg => {
             if (msg.role !== 'system') {
-                // Check if it's an image message (custom property)
                 if (msg.isImage) {
                     addImageMessageToUI(msg.content, msg.prompt);
                 } else {
@@ -244,7 +252,6 @@ function loadChat(sessionId) {
     localStorage.setItem('currentSessionId', currentSessionId);
     renderHistoryList();
 
-    // Close sidebar on mobile
     if (window.innerWidth <= 768) {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
@@ -303,7 +310,6 @@ function setupEventListeners() {
 
     if (messageInput) messageInput.addEventListener('input', autoResizeTextarea);
 
-    // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
         if (userProfile && profileDropdown && !userProfile.contains(e.target) && !profileDropdown.contains(e.target)) {
             profileDropdown.classList.remove('active');
@@ -350,7 +356,6 @@ async function handleSendMessage() {
     const inputContainer = document.querySelector('.input-container');
     if (inputContainer) inputContainer.style.display = 'flex';
 
-    // Add user message
     addMessageToUI('user', message);
     sessions[currentSessionId].messages.push({ role: "user", content: message });
     saveSession();
@@ -377,7 +382,6 @@ async function handleSendMessage() {
         try {
             await generateImage(message);
             removeTypingIndicator(typingId);
-            // Image saving handled in generateImage
         } catch (error) {
             removeTypingIndicator(typingId);
             addMessageToUI('ai', `Image generation failed: ${error.message}`);
@@ -437,7 +441,6 @@ function addMessageToUI(role, content) {
 
     const roleName = role === 'user' ? (currentUser ? currentUser.displayName.split(' ')[0] : 'You') : 'AI Assistant';
 
-    // Parse Markdown
     let formattedContent = role === 'ai' && typeof marked !== 'undefined' ? marked.parse(content) : content.replace(/\n/g, '<br>');
 
     messageDiv.innerHTML = `
@@ -467,14 +470,10 @@ function createActionButtons() {
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
-            <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
         </button>
     `;
 }
 
-// UI Designer Mode: Enhance Code Blocks
 function enhanceCodeBlock(codeBlock) {
     const pre = codeBlock.parentElement;
     let lang = 'Code';
@@ -514,15 +513,13 @@ function enhanceCodeBlock(codeBlock) {
     pre.insertBefore(header, codeBlock);
 }
 
-// Preview Code Function
 window.previewCode = function (btn) {
     const pre = btn.closest('.code-header').nextElementSibling;
     const code = pre.querySelector('code').innerText;
 
-    // Check if preview already exists
     let previewContainer = pre.nextElementSibling;
     if (previewContainer && previewContainer.classList.contains('preview-container')) {
-        previewContainer.remove(); // Toggle off
+        previewContainer.remove();
         return;
     }
 
@@ -535,7 +532,6 @@ window.previewCode = function (btn) {
 
     pre.parentNode.insertBefore(previewContainer, pre.nextSibling);
 
-    // Write content to iframe
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(code);
@@ -641,7 +637,9 @@ window.downloadImage = async function (imageUrl, prompt) {
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(console.error);
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registered', reg))
+            .catch(err => console.error('Service Worker registration failed', err));
     }
 }
 
