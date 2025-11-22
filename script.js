@@ -303,13 +303,12 @@ async function handleSendMessage() {
     } else if (currentMode === 'image') {
         // Image generation mode
         try {
-            const imageUrl = await generateImage(message);
+            await generateImage(message);
 
             // Remove typing indicator
             removeTypingIndicator(typingId);
 
-            // Add image message
-            addImageMessage(imageUrl, message);
+            // Image is added by generateImage function
         } catch (error) {
             removeTypingIndicator(typingId);
 
