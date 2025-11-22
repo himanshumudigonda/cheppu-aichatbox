@@ -477,18 +477,74 @@ function addMessage(role, content) {
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    // Apply syntax highlighting
+    // Apply syntax highlighting and enhance code blocks
     if (role === 'ai' && typeof hljs !== 'undefined') {
         messageDiv.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
+            enhanceCodeBlock(block);
         });
     }
+}
+
+// Enhance code block with header and copy button
+function enhanceCodeBlock(codeBlock) {
+    const pre = codeBlock.parentElement;
+
+    // Get language
+    let lang = 'Code';
+    codeBlock.classList.forEach(cls => {
+        if (cls.startsWith('language-')) {
+            lang = cls.replace('language-', '');
+        }
+    });
+
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'code-header';
+    header.innerHTML = `
+        <span class="code-lang">${lang}</span>
+        <button class="copy-code-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy
+        </button>
+    `;
+
+    // Insert header before code
+    pre.insertBefore(header, codeBlock);
+}
+
+// Copy specific code block
+window.copyCode = function (btn) {
+    const pre = btn.closest('pre');
+    const code = pre.querySelector('code').innerText;
+
+    navigator.clipboard.writeText(code).then(() => {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Copied!
+        `;
+        btn.style.color = '#4ade80';
+
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.style.color = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy code:', err);
+        showToast('Failed to copy code', 'error');
+    });
 }
 
 // Format message (handle code blocks, etc.)
 function formatMessage(content) {
     // Simple markdown-like formatting
-    content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
     content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
     content = content.replace(/\n/g, '<br>');
     return content;
