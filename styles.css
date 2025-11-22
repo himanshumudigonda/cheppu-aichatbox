@@ -332,28 +332,59 @@ body {
     overflow-y: auto;
 }
 
+/* History Item Styling */
 .history-item {
     padding: 10px 12px;
     border-radius: 8px;
-    color: var(--text-secondary);
-    font-size: 13px;
     cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all 0.2s;
-    border: 1px solid transparent;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.history-item span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .history-item:hover {
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
 }
 
 .history-item.active {
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    border-color: var(--border-subtle);
+}
+
+.delete-chat-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-item:hover .delete-chat-btn {
+    opacity: 1;
+}
+
+.delete-chat-btn:hover {
+    color: var(--danger);
+    background: rgba(255, 68, 68, 0.1);
 }
 
 /* User Profile */

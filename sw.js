@@ -1,5 +1,5 @@
-const CACHE_NAME = 'cheppu-ai-v1';
-const ASSETS = [
+const CACHE_NAME = 'cheppu-ai-v2';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/styles.css',
@@ -14,32 +14,37 @@ const ASSETS = [
 
 // Install Event
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force immediate activation
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+      .then((cache) => {
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
   );
 });
 
 // Activate Event
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    Promise.all([
+      self.clients.claim(), // Take control of all clients immediately
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    ])
   );
 });
 
 // Fetch Event
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests (like Firebase/API) for now to avoid CORS issues in simple cache
-  if (!event.request.url.startsWith(self.location.origin) && !ASSETS.includes(event.request.url)) {
+  if (!event.request.url.startsWith(self.location.origin) && !ASSETS_TO_CACHE.includes(event.request.url)) {
     return;
   }
 

@@ -219,10 +219,38 @@ function renderHistoryList() {
     sortedSessions.forEach(session => {
         const item = document.createElement('div');
         item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
-        item.textContent = session.title;
-        item.onclick = () => loadChat(session.id);
+
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = session.title;
+        titleSpan.onclick = () => loadChat(session.id);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-chat-btn';
+        deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteChat(session.id);
+        };
+
+        item.appendChild(titleSpan);
+        item.appendChild(deleteBtn);
         chatHistoryList.appendChild(item);
     });
+}
+
+function deleteChat(sessionId) {
+    if (confirm('Are you sure you want to delete this chat?')) {
+        delete sessions[sessionId];
+        localStorage.setItem('sessions', JSON.stringify(sessions));
+
+        if (currentSessionId === sessionId) {
+            currentSessionId = null;
+            localStorage.removeItem('currentSessionId');
+            startNewChat();
+        } else {
+            renderHistoryList();
+        }
+    }
 }
 
 function loadChat(sessionId) {
@@ -600,7 +628,7 @@ function removeTypingIndicator(id) {
 }
 
 async function generateImage(prompt) {
-    const api = document.getElementById('apiSelect') ? document.getElementById('apiSelect').value : 'pollinations-flux';
+    const api = document.getElementById('apiSelect') ? document.getElementById('apiSelect').value : 'pollinations-turbo';
     const model = document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'flux';
     const width = 1024;
     const height = 1024;
