@@ -54,210 +54,194 @@
 
             <div class="sidebar-content">
                 <button class="new-chat-btn" id="newChatBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14" />
-                    </svg>
-                    New Chat
-                </button>
-
-                <div class="divider"></div>
-
-                <!-- Mode Selection -->
-                <div class="control-group">
-                    <label>Workspace</label>
-                    <div class="segmented-control">
-                        <button class="segment active" data-value="chat" onclick="setMode('chat')">Chat</button>
-                        <button class="segment" data-value="image" onclick="setMode('image')">Image</button>
-                    </div>
                     <!-- Hidden select for JS compatibility -->
                     <select id="modelType" style="display: none;">
                         <option value="chat">Chat</option>
                         <option value="image">Image</option>
                     </select>
-                </div>
+            </div>
 
-                <!-- Chat Controls -->
-                <div id="chatControls" class="control-group">
-                    <label>Intelligence</label>
-                    <div class="custom-select-wrapper">
-                        <select id="aiModel" class="custom-select">
-                            <option value="auto">✨ Auto (Smartest)</option>
-                            <optgroup label="Popular">
-                                <option value="llama-3.3-70b-versatile">🧠 Llama 3.3 70B (Versatile)</option>
-                                <option value="llama-3.1-8b-instant">⚡ Llama 3.1 8B (Instant)</option>
-                                <option value="qwen/qwen3-32b">🐉 Qwen 3 32B</option>
-                            </optgroup>
-                            <optgroup label="Groq / Fast">
-                                <option value="groq/compound">🚀 Groq Compound</option>
-                                <option value="groq/compound-mini">🏎️ Groq Compound Mini</option>
-                            </optgroup>
-                            <optgroup label="Llama 4 (Preview)">
-                                <option value="meta-llama/llama-4-maverick-17b-128e-instruct">🦄 Llama 4 Maverick 17B
-                                </option>
-                                <option value="meta-llama/llama-4-scout-17b-16e-instruct">🦅 Llama 4 Scout 17B</option>
-                            </optgroup>
-                            <optgroup label="Moonshot AI">
-                                <option value="moonshotai/kimi-k2-instruct">🌙 Kimi K2 Instruct</option>
-                                <option value="moonshotai/kimi-k2-instruct-0905">🌑 Kimi K2 (0905)</option>
-                            </optgroup>
-                            <optgroup label="OpenAI OSS">
-                                <option value="openai/gpt-oss-120b">🤖 GPT-OSS 120B</option>
-                                <option value="openai/gpt-oss-20b">🤖 GPT-OSS 20B</option>
-                                <option value="openai/gpt-oss-safeguard-20b">🛡️ GPT-OSS Safeguard 20B</option>
-                            </optgroup>
-                            <optgroup label="Safety / Guard">
-                                <option value="meta-llama/llama-guard-4-12b">🛡️ Llama Guard 4 12B</option>
-                                <option value="meta-llama/llama-prompt-guard-2-22m">🛡️ Prompt Guard 22M</option>
-                                <option value="meta-llama/llama-prompt-guard-2-86m">🛡️ Prompt Guard 86M</option>
-                            </optgroup>
-                            <optgroup label="Creative">
-                                <option value="mixtral-8x7b-32768">🎨 Mixtral 8x7B</option>
-                            </optgroup>
-                        </select>
-                        <div class="select-arrow">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Image Controls (Initially Hidden) -->
-                <div id="imageControls" class="control-group" style="display: none;">
-                    <label>Image Settings</label>
-                    <div class="custom-select-wrapper" style="margin-bottom: 10px;">
-                        <select id="apiSelect" class="custom-select">
-                            <option value="pollinations-turbo">⚡ Turbo (Fastest)</option>
-                            <option value="pollinations-flux">✨ Flux (High Quality)</option>
-                        </select>
-                        <div class="select-arrow">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="custom-select-wrapper">
-                        <select id="modelSelect" class="custom-select">
-                            <option value="flux">Standard</option>
-                            <option value="3d">3D Render</option>
-                            <option value="anime">Anime Style</option>
-                        </select>
-                        <div class="select-arrow">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legacy/Hidden Elements for Script Compatibility -->
-                <div style="display: none;">
-                    <select id="ratioSelect">
-                        <option value="1:1">1:1</option>
-                        <option value="16:9">16:9</option>
-                        <option value="9:16">9:16</option>
+            <!-- Chat Controls -->
+            <div id="chatControls" class="control-group">
+                <label>Intelligence</label>
+                <div class="custom-select-wrapper">
+                    <select id="aiModel" class="custom-select">
+                        <option value="auto">✨ Auto (Smartest)</option>
+                        <optgroup label="Popular">
+                            <option value="llama-3.3-70b-versatile">🧠 Llama 3.3 70B (Versatile)</option>
+                            <option value="llama-3.1-8b-instant">⚡ Llama 3.1 8B (Instant)</option>
+                            <option value="qwen/qwen3-32b">🐉 Qwen 3 32B</option>
+                        </optgroup>
+                        <optgroup label="Groq / Fast">
+                            <option value="groq/compound">🚀 Groq Compound</option>
+                            <option value="groq/compound-mini">🏎️ Groq Compound Mini</option>
+                        </optgroup>
+                        <optgroup label="Llama 4 (Preview)">
+                            <option value="meta-llama/llama-4-maverick-17b-128e-instruct">🦄 Llama 4 Maverick 17B
+                            </option>
+                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">🦅 Llama 4 Scout 17B</option>
+                        </optgroup>
+                        <optgroup label="Moonshot AI">
+                            <option value="moonshotai/kimi-k2-instruct">🌙 Kimi K2 Instruct</option>
+                            <option value="moonshotai/kimi-k2-instruct-0905">🌑 Kimi K2 (0905)</option>
+                        </optgroup>
+                        <optgroup label="OpenAI OSS">
+                            <option value="openai/gpt-oss-120b">🤖 GPT-OSS 120B</option>
+                            <option value="openai/gpt-oss-20b">🤖 GPT-OSS 20B</option>
+                            <option value="openai/gpt-oss-safeguard-20b">🛡️ GPT-OSS Safeguard 20B</option>
+                        </optgroup>
+                        <optgroup label="Safety / Guard">
+                            <option value="meta-llama/llama-guard-4-12b">🛡️ Llama Guard 4 12B</option>
+                            <option value="meta-llama/llama-prompt-guard-2-22m">🛡️ Prompt Guard 22M</option>
+                            <option value="meta-llama/llama-prompt-guard-2-86m">🛡️ Prompt Guard 86M</option>
+                        </optgroup>
+                        <optgroup label="Creative">
+                            <option value="mixtral-8x7b-32768">🎨 Mixtral 8x7B</option>
+                        </optgroup>
                     </select>
-                    <div id="apiSelector"></div>
-                    <div id="modelSelector"></div>
-                    <div id="aspectRatioSelector"></div>
-                    <div id="widthSelector"><select id="widthInput">
-                            <option value="1024">1024</option>
-                        </select></div>
-                    <div id="chatModelSelector"></div>
-                </div>
-
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="avatar">U</div>
-                    <div class="user-info">
-                        <span class="name">User</span>
-                        <span class="status">Pro Plan</span>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-        <!-- Main Content -->
-        <main class="main-content">
-
-            <header class="top-bar">
-                <button class="icon-btn menu-btn" onclick="toggleSidebar()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12h18M3 6h18M3 18h18" />
-                    </svg>
-                </button>
-                <span class="header-title">Cheppu AI</span>
-                <button class="icon-btn theme-btn" id="themeToggle">
-                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <circle cx="12" cy="12" r="5" />
-                        <path
-                            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                    </svg>
-                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" style="display: none;">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                </button>
-            </header>
-
-            <div class="chat-area" id="chatContainer">
-                <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-hero">
-                        <h1>Good evening</h1>
-                        <p>What would you like to create today?</p>
-                    </div>
-                    <div class="suggestions-grid" id="chatSuggestions">
-                        <button class="suggestion-card" data-prompt="Explain quantum computing">
-                            <span class="icon">⚛️</span>
-                            <span class="text">Quantum Computing</span>
-                        </button>
-                        <button class="suggestion-card" data-prompt="Write a Python script">
-                            <span class="icon">🐍</span>
-                            <span class="text">Python Script</span>
-                        </button>
-                        <button class="suggestion-card" data-prompt="Creative writing tips">
-                            <span class="icon">✍️</span>
-                            <span class="text">Creative Writing</span>
-                        </button>
-                    </div>
-                    <div class="suggestions-grid" id="imageSuggestions" style="display: none;">
-                        <button class="suggestion-card" data-prompt="Cyberpunk city at night">
-                            <span class="icon">🌃</span>
-                            <span class="text">Cyberpunk City</span>
-                        </button>
-                        <button class="suggestion-card" data-prompt="Abstract digital art">
-                            <span class="icon">🎨</span>
-                            <span class="text">Abstract Art</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="messages-list" id="messagesContainer"></div>
-            </div>
-
-            <div class="input-wrapper">
-                <div class="input-container">
-                    <textarea id="messageInput" placeholder="Message Cheppu..." rows="1"></textarea>
-                    <button id="sendBtn" class="send-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    <div class="select-arrow">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
-                            <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" />
+                            <path d="M6 9l6 6 6-6" />
                         </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Controls (Initially Hidden) -->
+            <div id="imageControls" class="control-group" style="display: none;">
+                <label>Image Settings</label>
+                <div class="custom-select-wrapper" style="margin-bottom: 10px;">
+                    <select id="apiSelect" class="custom-select">
+                        <option value="pollinations-turbo">⚡ Turbo (Fastest)</option>
+                        <option value="pollinations-flux">✨ Flux (High Quality)</option>
+                    </select>
+                    <div class="select-arrow">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="custom-select-wrapper">
+                    <select id="modelSelect" class="custom-select">
+                        <option value="flux">Standard</option>
+                        <option value="3d">3D Render</option>
+                        <option value="anime">Anime Style</option>
+                    </select>
+                    <div class="select-arrow">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legacy/Hidden Elements for Script Compatibility -->
+            <div style="display: none;">
+                <select id="ratioSelect">
+                    <option value="1:1">1:1</option>
+                    <option value="16:9">16:9</option>
+                    <option value="9:16">9:16</option>
+                </select>
+                <div id="apiSelector"></div>
+                <div id="modelSelector"></div>
+                <div id="aspectRatioSelector"></div>
+                <div id="widthSelector"><select id="widthInput">
+                        <option value="1024">1024</option>
+                    </select></div>
+                <div id="chatModelSelector"></div>
+            </div>
+
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="user-profile">
+            <div class="avatar">U</div>
+            <div class="user-info">
+                <span class="name">User</span>
+                <span class="status">Pro Plan</span>
+            </div>
+        </div>
+    </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="top-bar">
+            <button class="icon-btn menu-btn" onclick="toggleSidebar()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
+            </button>
+            <span class="header-title">Cheppu AI</span>
+            <button class="icon-btn theme-btn" id="themeToggle">
+                <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="12" cy="12" r="5" />
+                    <path
+                        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                </svg>
+                <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </button>
+        </header>
+
+        <div class="chat-area" id="chatContainer">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-hero">
+                    <h1>Good evening</h1>
+                    <p>What would you like to create today?</p>
+                </div>
+                <div class="suggestions-grid" id="chatSuggestions">
+                    <button class="suggestion-card" data-prompt="Explain quantum computing">
+                        <span class="icon">⚛️</span>
+                        <span class="text">Quantum Computing</span>
+                    </button>
+                    <button class="suggestion-card" data-prompt="Write a Python script">
+                        <span class="icon">🐍</span>
+                        <span class="text">Python Script</span>
+                    </button>
+                    <button class="suggestion-card" data-prompt="Creative writing tips">
+                        <span class="icon">✍️</span>
+                        <span class="text">Creative Writing</span>
                     </button>
                 </div>
-                <div class="input-footer">
-                    <span>Cheppu AI can make mistakes. Check important info.</span>
+                <div class="suggestions-grid" id="imageSuggestions" style="display: none;">
+                    <button class="suggestion-card" data-prompt="Cyberpunk city at night">
+                        <span class="icon">🌃</span>
+                        <span class="text">Cyberpunk City</span>
+                    </button>
+                    <button class="suggestion-card" data-prompt="Abstract digital art">
+                        <span class="icon">🎨</span>
+                        <span class="text">Abstract Art</span>
+                    </button>
                 </div>
             </div>
+            <div class="messages-list" id="messagesContainer"></div>
+        </div>
 
-        </main>
+        <div class="input-wrapper">
+            <div class="input-container">
+                <textarea id="messageInput" placeholder="Message Cheppu..." rows="1"></textarea>
+                <button id="sendBtn" class="send-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="input-footer">
+                <span>Cheppu AI can make mistakes. Check important info.</span>
+            </div>
+        </div>
+
+    </main>
     </div>
 
     <script src="script.js"></script>

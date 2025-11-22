@@ -1,41 +1,14 @@
+```javascript
 // Global state
-let chatHistory = [
-    {
-        role: "system",
-        content: "You are a helpful assistant."
-    },
-    {
-        role: "user",
-        content: "Hello"
-    },
-    {
-        role: "assistant",
-        content: "Hello! How can I help you today!"
-    }
-];
-let currentChatId = null;
+let sessions = JSON.parse(localStorage.getItem('sessions')) || {};
+let currentSessionId = localStorage.getItem('currentSessionId') || null;
 let currentMode = 'chat'; // 'chat' or 'image'
-let currentModelIndex = 0; // Track current model in fallback chain
 
-// API Configuration
 // API Configuration
 const apiUrl = "https://router.huggingface.co/v1/chat/completions";
-
-// Use proxy server to bypass CORS
 const useProxyServer = true;
 const proxyUrl = "https://cheppu-aichatbox.onrender.com";
-
-// API Timeout (15 seconds for faster response)
 const API_TIMEOUT = 15000;
-
-// Fast model fallback chain (ordered by speed)
-const FALLBACK_MODELS = [
-    'llama-3.1-8b-instant',
-    'gemma2-9b-it',
-    'groq/compound-mini',
-    'llama-3.3-70b-versatile',
-    'mixtral-8x7b-32768'
-];
 
 // DOM Elements
 const welcomeScreen = document.getElementById('welcomeScreen');
@@ -44,31 +17,30 @@ const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const newChatBtn = document.getElementById('newChatBtn');
 const aiModelSelect = document.getElementById('aiModel');
-const apiSelector = document.getElementById('apiSelector');
-const modelSelector = document.getElementById('modelSelector');
-const aspectRatioSelector = document.getElementById('aspectRatioSelector');
-const widthSelector = document.getElementById('widthSelector');
-const apiSelect = document.getElementById('apiSelect');
-const modelSelect = document.getElementById('modelSelect');
-const ratioSelect = document.getElementById('ratioSelect');
-const widthInput = document.getElementById('widthInput');
+const chatHistoryList = document.getElementById('chatHistoryList');
 const modelTypeSelect = document.getElementById('modelType');
-const chatModelSelector = document.getElementById('chatModelSelector');
-const chatSuggestions = document.getElementById('chatSuggestions');
-const imageSuggestions = document.getElementById('imageSuggestions');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme(); // Initialize theme
+    initTheme();
     setupEventListeners();
     autoResizeTextarea();
     registerServiceWorker();
-    toggleMode(); // Ensure correct mode state
+    loadSessions();
+    
+    // Restore last session or start new
+    if (currentSessionId && sessions[currentSessionId]) {
+        loadChat(currentSessionId);
+    } else {
+        startNewChat();
+    }
+    
+    toggleMode();
 });
 
 // Theme Management
 function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeIcon(savedTheme);
     updateMetaThemeColor(savedTheme);
@@ -77,13 +49,11 @@ function initTheme() {
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
     updateThemeIcon(newTheme);
     updateMetaThemeColor(newTheme);
 }
-
 function updateMetaThemeColor(theme) {
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
@@ -94,7 +64,6 @@ function updateMetaThemeColor(theme) {
 function updateThemeIcon(theme) {
     const sunIcon = document.querySelector('.sun-icon');
     const moonIcon = document.querySelector('.moon-icon');
-
     if (theme === 'dark') {
         sunIcon.style.display = 'block';
         moonIcon.style.display = 'none';
@@ -104,43 +73,100 @@ function updateThemeIcon(theme) {
     }
 }
 
-// Register Service Worker for PWA
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then((registration) => {
-                    console.log('✅ Service Worker registered successfully:', registration.scope);
-
-                    // Check for updates periodically
-                    setInterval(() => {
-                        registration.update();
-                    }, 60000); // Check every minute
-
-                    // Listen for updates
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'activated') {
-                                console.log('🔄 Service Worker updated');
-                                // Optionally show notification to user
-                                showToast('App updated! Refresh for new features.', 'success');
-                            }
-                        });
-                    });
-                })
-                .catch((error) => {
-                    console.error('❌ Service Worker registration failed:', error);
-                });
-        });
-    } else {
-        console.log('⚠️ Service Workers not supported in this browser');
+// Session Management (Auto-Save)
+function saveSession() {
+    if (!currentSessionId) return;
+    
+    // Update timestamp
+    sessions[currentSessionId].lastModified = Date.now();
+    
+    // Generate title if new
+    if (sessions[currentSessionId].messages.length > 0 && sessions[currentSessionId].title === 'New Chat') {
+        const firstMsg = sessions[currentSessionId].messages.find(m => m.role === 'user');
+        if (firstMsg) {
+            sessions[currentSessionId].title = firstMsg.content.substring(0, 30) + (firstMsg.content.length > 30 ? '...' : '');
+        }
     }
+    
+    localStorage.setItem('sessions', JSON.stringify(sessions));
+    localStorage.setItem('currentSessionId', currentSessionId);
+    renderHistoryList();
+}
+
+function loadSessions() {
+    renderHistoryList();
+}
+
+function renderHistoryList() {
+    chatHistoryList.innerHTML = '';
+    
+    // Sort by last modified
+    const sortedSessions = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified);
+    
+    sortedSessions.forEach(session => {
+        const item = document.createElement('div');
+        item.className = `history - item ${ session.id === currentSessionId ? 'active' : '' } `;
+        item.textContent = session.title;
+        item.onclick = () => loadChat(session.id);
+        chatHistoryList.appendChild(item);
+    });
+}
+
+function loadChat(sessionId) {
+    currentSessionId = sessionId;
+    const session = sessions[sessionId];
+    
+    // Clear UI
+    messagesContainer.innerHTML = '';
+    
+    if (session.messages.length === 0) {
+        welcomeScreen.style.display = 'flex';
+        messagesContainer.classList.remove('active');
+    } else {
+        welcomeScreen.style.display = 'none';
+        messagesContainer.classList.add('active');
+        
+        // Render messages
+        session.messages.forEach(msg => {
+            if (msg.role !== 'system') {
+                // Check if it's an image message (custom property)
+                if (msg.isImage) {
+                    addImageMessageToUI(msg.content, msg.prompt);
+                } else {
+                    addMessageToUI(msg.role, msg.content);
+                }
+            }
+        });
+    }
+    
+    localStorage.setItem('currentSessionId', currentSessionId);
+    renderHistoryList();
+    
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+    }
+}
+
+function startNewChat() {
+    const newId = Date.now().toString();
+    sessions[newId] = {
+        id: newId,
+        title: 'New Chat',
+        messages: [
+            { role: "system", content: "You are a helpful assistant." }
+        ],
+        lastModified: Date.now()
+    };
+    
+    loadChat(newId);
 }
 
 // Event Listeners
 function setupEventListeners() {
-    // Ensure the input bar is functional
     if (messageInput && sendBtn) {
         sendBtn.addEventListener('click', handleSendMessage);
         messageInput.addEventListener('keydown', (e) => {
@@ -149,26 +175,18 @@ function setupEventListeners() {
                 handleSendMessage();
             }
         });
-    } else {
-        console.error('Input bar elements not found. Ensure #messageInput and #sendBtn exist in the DOM.');
     }
 
-    // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
-    }
+    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
     newChatBtn.addEventListener('click', startNewChat);
-    aiModelSelect.addEventListener('change', startNewChat);
-
-    // Mode switching
+    
     modelTypeSelect.addEventListener('change', (e) => {
         currentMode = e.target.value;
         toggleMode();
     });
 
-    // Suggestion cards
     document.querySelectorAll('.suggestion-card').forEach(card => {
         card.addEventListener('click', () => {
             const prompt = card.getAttribute('data-prompt');
@@ -180,304 +198,140 @@ function setupEventListeners() {
     messageInput.addEventListener('input', autoResizeTextarea);
 }
 
-// Toggle between chat and image mode
-// Ensure input-container visibility during mode switching and message sending
 function toggleMode() {
-    // Custom UI Toggle
     const chatControls = document.getElementById('chatControls');
     const imageControls = document.getElementById('imageControls');
     const chatSuggestions = document.getElementById('chatSuggestions');
     const imageSuggestions = document.getElementById('imageSuggestions');
 
     if (currentMode === 'chat') {
-        console.log('Activating chat mode');
         if (chatControls) chatControls.style.display = 'block';
         if (imageControls) imageControls.style.display = 'none';
         if (chatSuggestions) chatSuggestions.style.display = 'grid';
         if (imageSuggestions) imageSuggestions.style.display = 'none';
         messageInput.placeholder = 'Message Cheppu...';
     } else if (currentMode === 'image') {
-        console.log('Activating image generation mode');
         if (chatControls) chatControls.style.display = 'none';
         if (imageControls) imageControls.style.display = 'block';
         if (chatSuggestions) chatSuggestions.style.display = 'none';
         if (imageSuggestions) imageSuggestions.style.display = 'grid';
         messageInput.placeholder = 'Describe an image...';
     }
-    startNewChat();
 }
 
-// Auto-resize textarea
 function autoResizeTextarea() {
     messageInput.style.height = 'auto';
     messageInput.style.height = messageInput.scrollHeight + 'px';
 }
 
-// Smart model selection based on query - prioritizes SPEED
-function selectBestModel(message) {
-    const lowerMsg = message.toLowerCase();
-
-    // Web search indicators - use fast compound mini
-    if (lowerMsg.match(/latest|news|current|today|recent|what's happening|search|find information|weather|stock|price/)) {
-        return 'groq/compound-mini'; // Faster than compound
-    }
-
-    // Code execution indicators
-    if (lowerMsg.match(/run|execute|calculate|compute|python|code|program|script/)) {
-        return 'groq/compound-mini'; // Fast with tools
-    }
-
-    // Very complex reasoning - only then use slower models
-    if (lowerMsg.length > 800 || lowerMsg.match(/analyze in detail|comprehensive analysis|detailed research|write a long/)) {
-        return 'llama-3.3-70b-versatile'; // Balanced
-    }
-
-    // Short/Medium queries - FASTEST model
-    if (lowerMsg.length < 200) {
-        return 'llama-3.1-8b-instant'; // Fastest!
-    }
-
-    // Creative writing - use fast model
-    if (lowerMsg.match(/write.*story|poem|creative|fiction|imagine/)) {
-        return 'gemma2-9b-it'; // Fast and creative
-    }
-
-    // Default: FASTEST model for best UX
-    return 'llama-3.1-8b-instant';
-}
-
 // Handle sending message
 async function handleSendMessage() {
     const message = messageInput.value.trim();
-    console.log(`Sending message: ${message}`);
     if (!message) return;
 
-    console.log('Hiding welcome screen and activating messages container');
     welcomeScreen.style.display = 'none';
     messagesContainer.classList.add('active');
     document.querySelector('.input-container').style.display = 'flex';
 
     // Add user message
-    addMessage('user', message);
+    addMessageToUI('user', message);
+    sessions[currentSessionId].messages.push({ role: "user", content: message });
+    saveSession();
+    
     messageInput.value = '';
     autoResizeTextarea();
-
-    // Disable send button
     sendBtn.disabled = true;
 
-    // Show typing indicator
     const typingId = addTypingIndicator();
 
     if (currentMode === 'chat') {
-        // Add to chat history
-        chatHistory.push({ role: "user", content: message });
-
-        // Get AI response with automatic fallback
         try {
             const response = await callHuggingFaceApiWithFallback(message);
-
-            // Remove typing indicator
             removeTypingIndicator(typingId);
-
-            // Add AI response
-            addMessage('ai', response);
-
-            // Add to chat history
-            chatHistory.push({ role: "assistant", content: response });
+            addMessageToUI('ai', response);
+            sessions[currentSessionId].messages.push({ role: "assistant", content: response });
+            saveSession();
         } catch (error) {
             removeTypingIndicator(typingId);
-
-            let errorMessage = `Sorry, all models are currently unavailable. Please try again in a moment. (${error.message})`;
-
-            if (error.message.includes('timeout')) {
-                errorMessage = "⏱️ Request timed out. The service might be slow. Please try again or select a faster model.";
-            } else if (error.status === 429) {
-                errorMessage = "⚠️ Rate limit reached. Please wait a moment and try again.";
-            } else if (error.status === 503) {
-                errorMessage = "🔄 Service temporarily unavailable. Trying alternative models...";
-            }
-
-            addMessage('ai', errorMessage);
-            console.error('Error:', error);
+            const errorMsg = `Sorry, something went wrong. (${ error.message })`;
+            addMessageToUI('ai', errorMsg);
         }
     } else if (currentMode === 'image') {
-        // Image generation mode
         try {
             await generateImage(message);
-
-            // Remove typing indicator
             removeTypingIndicator(typingId);
-
-            // Image is added by generateImage function
+            // Image saving handled in generateImage
         } catch (error) {
             removeTypingIndicator(typingId);
-
-            let errorMessage = `Sorry, I couldn't generate the image. (${error.message})`;
-
-            if (error.name === 'AbortError') {
-                errorMessage = "⏱️ Request timed out. The model might be busy. Please try again.";
-            } else if (error.message.includes('402')) {
-                errorMessage = "💳 HuggingFace requires payment for image generation. Your free tier has expired or needs credits added at https://huggingface.co/settings/billing";
-            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                errorMessage = `🌐 CORS/Network Error: Unable to reach the image generation service.`;
-            } else if (error.message.includes('503')) {
-                errorMessage = "⏳ Model is loading. Please wait 30 seconds and try again.";
-            } else if (error.message.includes('401')) {
-                errorMessage = "🔑 Invalid API key. Please check the token configuration.";
-            }
-
-            addMessage('ai', errorMessage);
-            console.error('Image Error:', error);
+            addMessageToUI('ai', `Image generation failed: ${ error.message } `);
         }
     }
 
-    // Enable send button
     sendBtn.disabled = false;
     messageInput.focus();
 }
 
-// Call HuggingFace API with timeout
-async function callHuggingFaceApi(userMessage, modelOverride = null) {
-    let selectedModel = modelOverride || aiModelSelect.value;
-
-    // Auto model selection - prioritize speed
-    if (selectedModel === 'auto') {
-        selectedModel = selectBestModel(userMessage);
-        console.log(`🤖 Auto-selected model: ${selectedModel}`);
-    }
-
+// API Logic
+async function callHuggingFaceApiWithFallback(userMessage) {
+    const selectedModel = aiModelSelect.value === 'auto' ? 'llama-3.1-8b-instant' : aiModelSelect.value;
+    
     const payload = {
         model: selectedModel,
-        messages: chatHistory,
+        messages: sessions[currentSessionId].messages,
         type: 'chat'
     };
 
-    // Create abort controller for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
     try {
-        // Use proxy server with timeout
         const response = await fetch(proxyUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             signal: controller.signal
         });
-
         clearTimeout(timeoutId);
-
-        if (!response.ok) {
-            const err = new Error(`API Error: ${response.status}`);
-            err.status = response.status;
-            throw err;
-        }
-
+        
+        if (!response.ok) throw new Error(`API Error: ${ response.status } `);
         const result = await response.json();
-
-        if (result.choices && result.choices[0].message.content) {
-            // Silently handle model fallback (logging for debug only)
-            if (result.used_model && result.used_model !== selectedModel) {
-                console.log(`Server fell back to model: ${result.used_model}`);
-            }
-            return { content: result.choices[0].message.content, model: result.used_model || selectedModel };
-        } else {
-            throw new Error("Invalid API response structure.");
-        }
-
+        return result.choices[0].message.content;
     } catch (error) {
         clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            const timeoutError = new Error(`Timeout after ${API_TIMEOUT / 1000}s`);
-            timeoutError.name = 'TimeoutError';
-            timeoutError.model = selectedModel;
-            throw timeoutError;
-        }
-        error.model = selectedModel;
         throw error;
     }
 }
 
-// Call API with automatic fallback to faster models
-async function callHuggingFaceApiWithFallback(userMessage) {
-    // The server now handles fallback logic for better reliability
-    // We just make one call and let the server try multiple models
-
-    try {
-        const result = await callHuggingFaceApi(userMessage);
-        return result.content;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
-}
-
-// Get friendly model name for display
-function getModelDisplayName(model) {
-    const names = {
-        'llama-3.1-8b-instant': 'Ultra Fast',
-        'gemma2-9b-it': 'Creative Fast',
-        'groq/compound-mini': 'Ultra Fast Compound',
-        'llama-3.3-70b-versatile': 'High Intelligence',
-        'mixtral-8x7b-32768': 'Complex Reasoning'
-    };
-    return names[model] || model;
-}
-
-// Add message to chat
-function addMessage(role, content) {
+// UI Functions
+function addMessageToUI(role, content) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}`; // Add role class for specific styling
+    messageDiv.className = `message ${ role } `;
 
-    const avatar = role === 'user' ? 'U' : 'AI';
-    const roleName = role === 'user' ? 'You' : 'AI Assistant';
-
-    // Add copy button for AI messages
-    const copyButton = role === 'ai' ? `
-        <button class="copy-btn" onclick="copyMessage(this)" title="Copy message">
-            <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-            <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
-        </button>
-    ` : '';
-
-    // Use marked.js for AI, simple text for user (or marked for both if preferred)
-    let formattedContent;
-    if (role === 'ai' && typeof marked !== 'undefined') {
-        formattedContent = marked.parse(content);
-    } else {
-        // Fallback or user message
-        formattedContent = content.replace(/\n/g, '<br>');
-    }
-
-    // AI Avatar Sparkle
     const avatarHtml = role === 'ai' ? `
-        <div class="ai-avatar">
-            <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-            </svg>
-        </div>
-    ` : `<div class="avatar ${role}">${avatar}</div>`;
+    < div class="ai-avatar" >
+        <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+        </svg>
+        </div >
+    ` : ` < div class="avatar ${role}" > U</div > `;
+
+    const roleName = role === 'user' ? 'You' : 'AI Assistant';
+    
+    // Parse Markdown
+    let formattedContent = role === 'ai' && typeof marked !== 'undefined' ? marked.parse(content) : content.replace(/\n/g, '<br>');
 
     messageDiv.innerHTML = `
-        <div class="message-header">
-            ${avatarHtml}
-            <span class="message-role">${roleName}</span>
-            ${copyButton}
-        </div>
-        <div class="message-content">${formattedContent}</div>
-    `;
+        < div class="message-header" >
+            ${ avatarHtml }
+<span class="message-role">${roleName}</span>
+            ${ role === 'ai' ? createActionButtons() : '' }
+        </div >
+    <div class="message-content">${formattedContent}</div>
+`;
 
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    // Apply syntax highlighting and enhance code blocks
     if (role === 'ai' && typeof hljs !== 'undefined') {
         messageDiv.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
@@ -486,171 +340,167 @@ function addMessage(role, content) {
     }
 }
 
-// Enhance code block with header and copy button
-function enhanceCodeBlock(codeBlock) {
-    const pre = codeBlock.parentElement;
-
-    // Get language
-    let lang = 'Code';
-    codeBlock.classList.forEach(cls => {
-        if (cls.startsWith('language-')) {
-            lang = cls.replace('language-', '');
-        }
-    });
-
-    // Create header
-    const header = document.createElement('div');
-    header.className = 'code-header';
-    header.innerHTML = `
-        <span class="code-lang">${lang}</span>
-        <button class="copy-code-btn" onclick="copyCode(this)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+function createActionButtons() {
+    return `
+    < button class="copy-btn" onclick = "copyMessage(this)" title = "Copy message" >
+            <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
-            Copy
-        </button>
+            <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </button >
     `;
+}
 
-    // Insert header before code
+// UI Designer Mode: Enhance Code Blocks
+function enhanceCodeBlock(codeBlock) {
+    const pre = codeBlock.parentElement;
+    let lang = 'Code';
+    codeBlock.classList.forEach(cls => {
+        if (cls.startsWith('language-')) lang = cls.replace('language-', '');
+    });
+    
+    const header = document.createElement('div');
+    header.className = 'code-header';
+    
+    let previewBtn = '';
+    if (lang === 'html' || lang === 'xml') {
+        previewBtn = `
+    < button class="preview-btn" onclick = "previewCode(this)" >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+        </svg>
+Preview
+            </button >
+    `;
+    }
+
+    header.innerHTML = `
+    < span class="code-lang" > ${ lang }</span >
+        <div style="display:flex; align-items:center;">
+            ${previewBtn}
+            <button class="copy-code-btn" onclick="copyCode(this)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                Copy
+            </button>
+        </div>
+`;
     pre.insertBefore(header, codeBlock);
 }
 
-// Copy specific code block
-window.copyCode = function (btn) {
-    const pre = btn.closest('pre');
+// Preview Code Function
+window.previewCode = function(btn) {
+    const pre = btn.closest('.code-header').nextElementSibling;
     const code = pre.querySelector('code').innerText;
+    
+    // Check if preview already exists
+    let previewContainer = pre.nextElementSibling;
+    if (previewContainer && previewContainer.classList.contains('preview-container')) {
+        previewContainer.remove(); // Toggle off
+        return;
+    }
+    
+    previewContainer = document.createElement('div');
+    previewContainer.className = 'preview-container';
+    
+    const iframe = document.createElement('iframe');
+    iframe.className = 'preview-frame';
+    previewContainer.appendChild(iframe);
+    
+    pre.parentNode.insertBefore(previewContainer, pre.nextSibling);
+    
+    // Write content to iframe
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(code);
+    doc.close();
+}
 
+window.copyCode = function(btn) {
+    const pre = btn.closest('.code-header').nextElementSibling;
+    const code = pre.querySelector('code').innerText;
     navigator.clipboard.writeText(code).then(() => {
         const originalHtml = btn.innerHTML;
-        btn.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Copied!
-        `;
-        btn.style.color = '#4ade80';
-
-        setTimeout(() => {
-            btn.innerHTML = originalHtml;
-            btn.style.color = '';
-        }, 2000);
-    }).catch(err => {
-        console.error('Failed to copy code:', err);
-        showToast('Failed to copy code', 'error');
+        btn.innerHTML = 'Copied!';
+        setTimeout(() => btn.innerHTML = originalHtml, 2000);
     });
 }
 
-// Format message (handle code blocks, etc.)
-function formatMessage(content) {
-    // Simple markdown-like formatting
-    content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>');
-    content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
-    content = content.replace(/\n/g, '<br>');
-    return content;
+window.copyMessage = function(btn) {
+    const content = btn.closest('.message').querySelector('.message-content').innerText;
+    navigator.clipboard.writeText(content).then(() => {
+        showToast('Copied to clipboard!');
+    });
 }
 
-// Add typing indicator
 function addTypingIndicator() {
     const typingDiv = document.createElement('div');
     typingDiv.className = 'message';
     const typingId = 'typing-' + Date.now();
     typingDiv.id = typingId;
-
     typingDiv.innerHTML = `
-        <div class="message-header">
-            <div class="avatar ai">AI</div>
+    < div class="message-header" >
+            <div class="ai-avatar"><svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
             <span class="message-role">AI Assistant</span>
-        </div>
-        <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        </div>
-    `;
-
+        </div >
+    <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+`;
     messagesContainer.appendChild(typingDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
     return typingId;
 }
 
-// Remove typing indicator
-function removeTypingIndicator(typingId) {
-    const typingDiv = document.getElementById(typingId);
-    if (typingDiv) {
-        typingDiv.remove();
-    }
+function removeTypingIndicator(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
 }
 
-// Generate image using HuggingFace API
-// Generate image using Fast APIs
-// Generate image using Fast APIs
 async function generateImage(prompt) {
     const api = document.getElementById('apiSelect').value;
     const model = document.getElementById('modelSelect').value;
-    const ratio = document.getElementById('ratioSelect').value;
-    const widthInput = document.getElementById('widthInput');
-    const width = parseInt(widthInput.value);
-
-    // Calculate height based on aspect ratio
-    const ratios = {
-        '1:1': 1,
-        '16:9': 9 / 16,
-        '9:16': 16 / 9,
-        '4:3': 3 / 4,
-        '3:4': 4 / 3
-    };
-    const height = Math.round(width * ratios[ratio]);
+    const width = 1024;
+    const height = 1024;
     const seed = Math.floor(Math.random() * 1000000);
-
+    
     let imageUrl;
-
-    try {
-        // Ultra-fast optimized endpoints prioritized
-        if (api === 'pollinations-turbo') {
-            // Pollinations TURBO mode - fastest option (2-3 seconds)
-            imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&enhance=false&seed=${seed}`;
-
-        } else {
-            // Pollinations FLUX mode (Default fallback)
-            let enhancedPrompt = prompt;
-            if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5, octane render";
-            if (model === 'anime') enhancedPrompt += ", anime style, studio ghibli, vibrant";
-            if (model === 'flux') enhancedPrompt += ", hyperrealistic, 8k, detailed";
-
-            imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
-        }
-
-        // Create image element
-        const imgContainer = document.createElement('div');
-        imgContainer.className = 'message ai';
-        imgContainer.innerHTML = `
-            <div class="ai-avatar">
-                <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                </svg>
-            </div>
-            <div class="message-content">
-                <img src="${imageUrl}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                <p style="margin-top: 8px; font-size: 0.85rem; color: #888;">Generated with ${api === 'pollinations-turbo' ? 'Turbo' : 'Flux'}</p>
-                <button class="download-btn" onclick="downloadImage('${imageUrl}', '${prompt.replace(/'/g, "\\'")}')" style="margin-top: 8px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: inherit; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                    Download
-                </button>
-            </div>
-        `;
-
-        messagesContainer.appendChild(imgContainer);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-    } catch (error) {
-        console.error("Image Gen Error:", error);
-        addMessage("Sorry, I couldn't generate that image. Please try again.", 'ai');
-    }
+    if (api === 'pollinations-turbo') {
+        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&seed=${seed}`;
+    } else {
+    let enhancedPrompt = prompt;
+    if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5";
+    if (model === 'anime') enhancedPrompt += ", anime style, vibrant";
+    imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
 }
 
-// Download image function
+addImageMessageToUI(imageUrl, prompt);
+sessions[currentSessionId].messages.push({ role: "assistant", content: imageUrl, isImage: true, prompt: prompt });
+saveSession();
+}
+
+function addImageMessageToUI(imageUrl, prompt) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'message ai';
+    msgDiv.innerHTML = `
+        <div class="ai-avatar"><svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
+        <div class="message-content">
+            <img src="${imageUrl}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <p style="margin-top: 8px; font-size: 0.85rem; color: #888;">${prompt}</p>
+            <button class="download-btn" onclick="downloadImage('${imageUrl}', '${prompt.replace(/'/g, "\\'")}')" style="margin-top: 8px; padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: inherit; cursor: display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                Download
+            </button>
+        </div>
+    `;
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
 window.downloadImage = async function (imageUrl, prompt) {
     try {
         const response = await fetch(imageUrl);
@@ -662,116 +512,26 @@ window.downloadImage = async function (imageUrl, prompt) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
     } catch (error) {
-        console.error('Download failed:', error);
-        // Fallback to opening in new tab
         window.open(imageUrl, '_blank');
     }
 }
 
-// Start new chat
-function startNewChat() {
-    // Reset chat history
-    chatHistory = [
-        {
-            role: "system",
-            content: "You are a helpful assistant."
-        },
-        {
-            role: "user",
-            content: "Hello"
-        },
-        {
-            role: "assistant",
-            content: "Hello! How can I help you today?"
-        }
-    ];
-
-    messagesContainer.innerHTML = '';
-    messagesContainer.classList.remove('active');
-    welcomeScreen.style.display = 'flex';
-    currentChatId = null;
-}
-
-// Mobile menu toggle
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-}
-
-// Close sidebar when clicking outside on mobile (handled by overlay now)
-// Kept for safety if overlay fails
-document.addEventListener('click', (e) => {
-    const sidebar = document.getElementById('sidebar');
-    const menuBtn = document.getElementById('menuBtn');
-
-    if (window.innerWidth <= 768 &&
-        sidebar.classList.contains('open') &&
-        !sidebar.contains(e.target) &&
-        !menuBtn.contains(e.target) &&
-        !e.target.classList.contains('sidebar-overlay')) {
-        // sidebar.classList.remove('open'); // Let overlay handle it
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
-});
-
-// Copy message function
-// Copy message function
-window.copyMessage = function (button) {
-    const messageContent = button.closest('.message').querySelector('.message-content');
-    const textToCopy = messageContent.innerText || messageContent.textContent;
-
-    navigator.clipboard.writeText(textToCopy).then(() => {
-        // Show check icon
-        const copyIcon = button.querySelector('.copy-icon');
-        const checkIcon = button.querySelector('.check-icon');
-
-        copyIcon.style.display = 'none';
-        checkIcon.style.display = 'block';
-        button.classList.add('copied');
-
-        // Show toast notification
-        showToast('Copied to clipboard!');
-
-        // Reset after 2 seconds
-        setTimeout(() => {
-            copyIcon.style.display = 'block';
-            checkIcon.style.display = 'none';
-            button.classList.remove('copied');
-        }, 2000);
-    }).catch(err => {
-        console.error('Failed to copy:', err);
-        showToast('Failed to copy', 'error');
-    });
 }
 
-// Toast notification function
-function showToast(message, type = 'success') {
-    // Remove existing toast
-    const existingToast = document.querySelector('.toast');
-    if (existingToast) {
-        existingToast.remove();
-    }
-
+function showToast(message) {
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        <span>${message}</span>
-    `;
-
+    toast.className = 'toast';
+    toast.textContent = message;
     document.body.appendChild(toast);
-
-    // Trigger animation
     setTimeout(() => toast.classList.add('show'), 10);
-
-    // Remove after 3 seconds
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
+```
