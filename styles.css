@@ -625,6 +625,45 @@ textarea::placeholder {
     color: #fff;
 }
 
+/* Hide menu buttons on desktop */
+.menu-btn,
+.close-sidebar-btn {
+    display: none;
+}
+
+/* Segmented Control */
+.segmented-control {
+    display: flex;
+    background: var(--bg-tertiary);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 20px;
+}
+
+.segment {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.segment:hover {
+    color: var(--text-primary);
+}
+
+.segment.active {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* Mobile Improvements */
 @media (max-width: 768px) {
 

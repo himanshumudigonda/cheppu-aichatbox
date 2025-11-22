@@ -293,10 +293,15 @@ function setupEventListeners() {
 
     if (modelTypeSelect) {
         modelTypeSelect.addEventListener('change', (e) => {
-            currentMode = e.target.value;
-            toggleMode();
+            setMode(e.target.value);
         });
     }
+
+    // Add listeners for new mode buttons if they exist (fallback)
+    const chatBtn = document.getElementById('modeChatBtn');
+    const imageBtn = document.getElementById('modeImageBtn');
+    if (chatBtn) chatBtn.addEventListener('click', () => setMode('chat'));
+    if (imageBtn) imageBtn.addEventListener('click', () => setMode('image'));
 
     document.querySelectorAll('.suggestion-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -317,24 +322,40 @@ function setupEventListeners() {
     });
 }
 
+function setMode(mode) {
+    currentMode = mode;
+    toggleMode();
+}
+
 function toggleMode() {
     const chatControls = document.getElementById('chatControls');
     const imageControls = document.getElementById('imageControls');
     const chatSuggestions = document.getElementById('chatSuggestions');
     const imageSuggestions = document.getElementById('imageSuggestions');
 
+    // Update Buttons
+    const chatBtn = document.getElementById('modeChatBtn');
+    const imageBtn = document.getElementById('modeImageBtn');
+
     if (currentMode === 'chat') {
-        if (chatControls) chatControls.style.display = 'block';
+        if (chatControls) chatControls.style.display = 'block'; // Keep hidden if empty, but logic handles it
         if (imageControls) imageControls.style.display = 'none';
         if (chatSuggestions) chatSuggestions.style.display = 'grid';
         if (imageSuggestions) imageSuggestions.style.display = 'none';
         if (messageInput) messageInput.placeholder = 'Message Cheppu...';
+
+        if (chatBtn) chatBtn.classList.add('active');
+        if (imageBtn) imageBtn.classList.remove('active');
+
     } else if (currentMode === 'image') {
         if (chatControls) chatControls.style.display = 'none';
         if (imageControls) imageControls.style.display = 'block';
         if (chatSuggestions) chatSuggestions.style.display = 'none';
         if (imageSuggestions) imageSuggestions.style.display = 'grid';
         if (messageInput) messageInput.placeholder = 'Describe an image...';
+
+        if (chatBtn) chatBtn.classList.remove('active');
+        if (imageBtn) imageBtn.classList.add('active');
     }
 }
 
