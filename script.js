@@ -9,6 +9,7 @@ const apiUrl = "https://router.huggingface.co/v1/chat/completions";
 const useProxyServer = true;
 const proxyUrl = "https://cheppu-aichatbox.onrender.com";
 const API_TIMEOUT = 15000;
+const GOOGLE_API_KEY = "YOUR_API_KEY_HERE"; // TODO: Replace with your Gemini API Key
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -445,6 +446,10 @@ async function handleSendMessage() {
 async function callHuggingFaceApiWithFallback(userMessage) {
     const selectedModel = aiModelSelect && aiModelSelect.value === 'auto' ? 'llama-3.1-8b-instant' : (aiModelSelect ? aiModelSelect.value : 'llama-3.1-8b-instant');
 
+    if (selectedModel.startsWith('gemini')) {
+        return await callGeminiApi(selectedModel, sessions[currentSessionId].messages);
+    }
+
     const payload = {
         model: selectedModel,
         messages: sessions[currentSessionId].messages,
@@ -470,6 +475,48 @@ async function callHuggingFaceApiWithFallback(userMessage) {
         clearTimeout(timeoutId);
         throw error;
     }
+}
+
+
+async function callGeminiApi(model, messages) {
+    if (GOOGLE_API_KEY === "YOUR_API_KEY_HERE") {
+        throw new Error("Please set your Google API Key in script.js");
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`;
+
+    // Convert messages to Gemini format
+    const contents = messages.map(msg => {
+        if (msg.role === 'system') return null; // Gemini doesn't support system role in contents directly usually, or it's different. For now skip or prepend.
+        return {
+            role: msg.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: msg.content }]
+        };
+    }).filter(Boolean);
+
+    // Handle system prompt if present (prepend to first user message or use system_instruction if supported, but simple prepend is safer for now)
+    const systemMsg = messages.find(m => m.role === 'system');
+    if (systemMsg && contents.length > 0 && contents[0].role === 'user') {
+        contents[0].parts[0].text = `${systemMsg.content}\n\n${contents[0].parts[0].text}`;
+    }
+
+    const payload = {
+        contents: contents
+    };
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `Gemini API Error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.candidates[0].content.parts[0].text;
 }
 
 // UI Functions
