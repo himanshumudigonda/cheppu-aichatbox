@@ -52,69 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Firebase & Auth Flow
     initFirebaseAuth();
 
-    // Load sessions (will be hidden until login)
-    loadSessions();
-    toggleMode();
-});
-
-// Firebase Auth Logic
-function initFirebaseAuth() {
-    console.log("Initializing Firebase Auth...");
-    if (typeof firebase === 'undefined') {
-        console.error("Firebase SDK not loaded");
-        showToast("Error: Firebase SDK not loaded. Check your internet connection.");
-        return;
-    }
-
-    try {
-        // Initialize only if not already initialized
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
-        // Auth State Listener
-        firebase.auth().onAuthStateChanged(user => {
-            console.log("Auth State Changed:", user ? "User Logged In" : "User Logged Out");
-            if (user) {
-                handleUserLogin(user);
-            } else {
-                handleUserLogout();
-            }
-        });
-
-        // Login Button Handler - Re-select to be safe
-        const btn = document.getElementById('loginBtn');
-        if (btn) {
-            console.log("Login button found, attaching listener");
-            // Remove old listener to prevent duplicates (though not strictly necessary if run once)
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-
-            newBtn.addEventListener('click', () => {
-                console.log("Login button clicked");
-                const provider = new firebase.auth.GoogleAuthProvider();
-                firebase.auth().signInWithPopup(provider)
-                    .then((result) => {
-                        console.log("Login success:", result.user);
-                    })
-                    .catch((error) => {
-                        console.error("Login Error:", error);
-                        showToast(`Login failed: ${error.message}`);
-                    });
-            });
-        } else {
-            console.error("Login button not found in DOM");
-        }
-
-    } catch (e) {
-        console.error("Firebase Initialization Error:", e);
-        showToast(`Auth Error: ${e.message}`);
-    }
-}
-
-function handleUserLogin(user) {
-    currentUser = user;
-
     // UI Transition: Hide Login, Show App
     if (loginOverlay) loginOverlay.classList.add('hidden');
     if (appLayout) {
@@ -146,405 +83,405 @@ function handleUserLogin(user) {
 }
 
 function handleUserLogout() {
-    currentUser = null;
+        currentUser = null;
 
-    // UI Transition: Show Login, Hide App
-    if (loginOverlay) loginOverlay.classList.remove('hidden');
-    if (appLayout) {
-        appLayout.classList.remove('visible');
-        setTimeout(() => appLayout.style.display = 'none', 500);
+        // UI Transition: Show Login, Hide App
+        if (loginOverlay) loginOverlay.classList.remove('hidden');
+        if (appLayout) {
+            appLayout.classList.remove('visible');
+            setTimeout(() => appLayout.style.display = 'none', 500);
+        }
+
+        if (profileDropdown) profileDropdown.classList.remove('active');
     }
-
-    if (profileDropdown) profileDropdown.classList.remove('active');
-}
 
 function signOut() {
-    if (typeof firebase !== 'undefined') {
-        firebase.auth().signOut();
+        if (typeof firebase !== 'undefined') {
+            firebase.auth().signOut();
+        }
     }
-}
 
 function toggleProfileDropdown() {
-    if (profileDropdown) profileDropdown.classList.toggle('active');
-}
+        if (profileDropdown) profileDropdown.classList.toggle('active');
+    }
 
 function getRandomAvatar(seed) {
-    return `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${seed || Math.random()}`;
-}
+        return `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${seed || Math.random()}`;
+    }
 
 // Theme Management
 function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-    updateMetaThemeColor(savedTheme);
-}
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        updateMetaThemeColor(savedTheme);
+    }
 
 function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeIcon(newTheme);
-    updateMetaThemeColor(newTheme);
-}
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+        updateMetaThemeColor(newTheme);
+    }
 
 function updateMetaThemeColor(theme) {
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f1117' : '#ffffff');
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f1117' : '#ffffff');
+        }
     }
-}
 
 function updateThemeIcon(theme) {
-    const sunIcon = document.querySelector('.sun-icon');
-    const moonIcon = document.querySelector('.moon-icon');
-    if (theme === 'dark') {
-        if (sunIcon) sunIcon.style.display = 'block';
-        if (moonIcon) moonIcon.style.display = 'none';
-    } else {
-        if (sunIcon) sunIcon.style.display = 'none';
-        if (moonIcon) moonIcon.style.display = 'block';
+        const sunIcon = document.querySelector('.sun-icon');
+        const moonIcon = document.querySelector('.moon-icon');
+        if (theme === 'dark') {
+            if (sunIcon) sunIcon.style.display = 'block';
+            if (moonIcon) moonIcon.style.display = 'none';
+        } else {
+            if (sunIcon) sunIcon.style.display = 'none';
+            if (moonIcon) moonIcon.style.display = 'block';
+        }
     }
-}
 
 // Session Management
 function saveSession() {
-    if (!currentSessionId) return;
+        if (!currentSessionId) return;
 
-    sessions[currentSessionId].lastModified = Date.now();
+        sessions[currentSessionId].lastModified = Date.now();
 
-    if (sessions[currentSessionId].messages.length > 0 && sessions[currentSessionId].title === 'New Chat') {
-        const firstMsg = sessions[currentSessionId].messages.find(m => m.role === 'user');
-        if (firstMsg) {
-            sessions[currentSessionId].title = firstMsg.content.substring(0, 30) + (firstMsg.content.length > 30 ? '...' : '');
+        if (sessions[currentSessionId].messages.length > 0 && sessions[currentSessionId].title === 'New Chat') {
+            const firstMsg = sessions[currentSessionId].messages.find(m => m.role === 'user');
+            if (firstMsg) {
+                sessions[currentSessionId].title = firstMsg.content.substring(0, 30) + (firstMsg.content.length > 30 ? '...' : '');
+            }
         }
-    }
 
-    localStorage.setItem('sessions', JSON.stringify(sessions));
-    localStorage.setItem('currentSessionId', currentSessionId);
-    renderHistoryList();
-}
+        localStorage.setItem('sessions', JSON.stringify(sessions));
+        localStorage.setItem('currentSessionId', currentSessionId);
+        renderHistoryList();
+    }
 
 function loadSessions() {
-    renderHistoryList();
-}
+        renderHistoryList();
+    }
 
 function renderHistoryList() {
-    if (!chatHistoryList) return;
-    chatHistoryList.innerHTML = '';
+        if (!chatHistoryList) return;
+        chatHistoryList.innerHTML = '';
 
-    const sortedSessions = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified);
+        const sortedSessions = Object.values(sessions).sort((a, b) => b.lastModified - a.lastModified);
 
-    sortedSessions.forEach(session => {
-        const item = document.createElement('div');
-        item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
+        sortedSessions.forEach(session => {
+            const item = document.createElement('div');
+            item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
 
-        const titleSpan = document.createElement('span');
-        titleSpan.textContent = session.title;
-        titleSpan.onclick = () => loadChat(session.id);
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = session.title;
+            titleSpan.onclick = () => loadChat(session.id);
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-chat-btn';
-        deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            deleteChat(session.id);
-        };
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-chat-btn';
+            deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                deleteChat(session.id);
+            };
 
-        item.appendChild(titleSpan);
-        item.appendChild(deleteBtn);
-        chatHistoryList.appendChild(item);
-    });
-}
-
-function deleteChat(sessionId) {
-    if (confirm('Are you sure you want to delete this chat?')) {
-        delete sessions[sessionId];
-        localStorage.setItem('sessions', JSON.stringify(sessions));
-
-        if (currentSessionId === sessionId) {
-            currentSessionId = null;
-            localStorage.removeItem('currentSessionId');
-            startNewChat();
-        } else {
-            renderHistoryList();
-        }
-    }
-}
-
-function loadChat(sessionId) {
-    currentSessionId = sessionId;
-    const session = sessions[sessionId];
-
-    if (messagesContainer) messagesContainer.innerHTML = '';
-
-    if (session.messages.length === 0) {
-        if (welcomeScreen) welcomeScreen.style.display = 'flex';
-        if (messagesContainer) messagesContainer.classList.remove('active');
-    } else {
-        if (welcomeScreen) welcomeScreen.style.display = 'none';
-        if (messagesContainer) messagesContainer.classList.add('active');
-
-        session.messages.forEach(msg => {
-            if (msg.role !== 'system') {
-                if (msg.isImage) {
-                    addImageMessageToUI(msg.content, msg.prompt);
-                } else {
-                    addMessageToUI(msg.role, msg.content);
-                }
-            }
+            item.appendChild(titleSpan);
+            item.appendChild(deleteBtn);
+            chatHistoryList.appendChild(item);
         });
     }
 
-    localStorage.setItem('currentSessionId', currentSessionId);
-    renderHistoryList();
+function deleteChat(sessionId) {
+        if (confirm('Are you sure you want to delete this chat?')) {
+            delete sessions[sessionId];
+            localStorage.setItem('sessions', JSON.stringify(sessions));
 
-    if (window.innerWidth <= 768) {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        if (sidebar) sidebar.classList.remove('active');
-        if (overlay) overlay.classList.remove('active');
+            if (currentSessionId === sessionId) {
+                currentSessionId = null;
+                localStorage.removeItem('currentSessionId');
+                startNewChat();
+            } else {
+                renderHistoryList();
+            }
+        }
     }
-}
+
+function loadChat(sessionId) {
+        currentSessionId = sessionId;
+        const session = sessions[sessionId];
+
+        if (messagesContainer) messagesContainer.innerHTML = '';
+
+        if (session.messages.length === 0) {
+            if (welcomeScreen) welcomeScreen.style.display = 'flex';
+            if (messagesContainer) messagesContainer.classList.remove('active');
+        } else {
+            if (welcomeScreen) welcomeScreen.style.display = 'none';
+            if (messagesContainer) messagesContainer.classList.add('active');
+
+            session.messages.forEach(msg => {
+                if (msg.role !== 'system') {
+                    if (msg.isImage) {
+                        addImageMessageToUI(msg.content, msg.prompt);
+                    } else {
+                        addMessageToUI(msg.role, msg.content);
+                    }
+                }
+            });
+        }
+
+        localStorage.setItem('currentSessionId', currentSessionId);
+        renderHistoryList();
+
+        if (window.innerWidth <= 768) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+        }
+    }
 
 function startNewChat() {
-    const newId = Date.now().toString();
-    sessions[newId] = {
-        id: newId,
-        title: 'New Chat',
-        messages: [
-            { role: "system", content: "You are a helpful assistant." }
-        ],
-        lastModified: Date.now()
-    };
+        const newId = Date.now().toString();
+        sessions[newId] = {
+            id: newId,
+            title: 'New Chat',
+            messages: [
+                { role: "system", content: "You are a helpful assistant." }
+            ],
+            lastModified: Date.now()
+        };
 
-    loadChat(newId);
-}
+        loadChat(newId);
+    }
 
 // Event Listeners
 function setupEventListeners() {
-    if (messageInput && sendBtn) {
-        sendBtn.addEventListener('click', handleSendMessage);
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-            }
-        });
-    }
-
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
-
-    if (newChatBtn) newChatBtn.addEventListener('click', startNewChat);
-
-    if (modelTypeSelect) {
-        modelTypeSelect.addEventListener('change', (e) => {
-            setMode(e.target.value);
-        });
-    }
-
-    // Add listeners for new mode buttons if they exist (fallback)
-    const chatBtn = document.getElementById('modeChatBtn');
-    const imageBtn = document.getElementById('modeImageBtn');
-    if (chatBtn) chatBtn.addEventListener('click', () => setMode('chat'));
-    if (imageBtn) imageBtn.addEventListener('click', () => setMode('image'));
-
-    document.querySelectorAll('.suggestion-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const prompt = card.getAttribute('data-prompt');
-            if (messageInput) {
-                messageInput.value = prompt;
-                handleSendMessage();
-            }
-        });
-    });
-
-    if (messageInput) messageInput.addEventListener('input', autoResizeTextarea);
-
-    document.addEventListener('click', (e) => {
-        if (userProfile && profileDropdown && !userProfile.contains(e.target) && !profileDropdown.contains(e.target)) {
-            profileDropdown.classList.remove('active');
+        if (messageInput && sendBtn) {
+            sendBtn.addEventListener('click', handleSendMessage);
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
         }
-    });
-}
+
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
+        if (newChatBtn) newChatBtn.addEventListener('click', startNewChat);
+
+        if (modelTypeSelect) {
+            modelTypeSelect.addEventListener('change', (e) => {
+                setMode(e.target.value);
+            });
+        }
+
+        // Add listeners for new mode buttons if they exist (fallback)
+        const chatBtn = document.getElementById('modeChatBtn');
+        const imageBtn = document.getElementById('modeImageBtn');
+        if (chatBtn) chatBtn.addEventListener('click', () => setMode('chat'));
+        if (imageBtn) imageBtn.addEventListener('click', () => setMode('image'));
+
+        document.querySelectorAll('.suggestion-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const prompt = card.getAttribute('data-prompt');
+                if (messageInput) {
+                    messageInput.value = prompt;
+                    handleSendMessage();
+                }
+            });
+        });
+
+        if (messageInput) messageInput.addEventListener('input', autoResizeTextarea);
+
+        document.addEventListener('click', (e) => {
+            if (userProfile && profileDropdown && !userProfile.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('active');
+            }
+        });
+    }
 
 function setMode(mode) {
-    currentMode = mode;
-    toggleMode();
-}
+        currentMode = mode;
+        toggleMode();
+    }
 
 function toggleMode() {
-    const chatControls = document.getElementById('chatControls');
-    const imageControls = document.getElementById('imageControls');
-    const chatSuggestions = document.getElementById('chatSuggestions');
-    const imageSuggestions = document.getElementById('imageSuggestions');
+        const chatControls = document.getElementById('chatControls');
+        const imageControls = document.getElementById('imageControls');
+        const chatSuggestions = document.getElementById('chatSuggestions');
+        const imageSuggestions = document.getElementById('imageSuggestions');
 
-    // Update Buttons
-    const chatBtn = document.getElementById('modeChatBtn');
-    const imageBtn = document.getElementById('modeImageBtn');
+        // Update Buttons
+        const chatBtn = document.getElementById('modeChatBtn');
+        const imageBtn = document.getElementById('modeImageBtn');
 
-    if (currentMode === 'chat') {
-        if (chatControls) chatControls.style.display = 'block'; // Keep hidden if empty, but logic handles it
-        if (imageControls) imageControls.style.display = 'none';
-        if (chatSuggestions) chatSuggestions.style.display = 'grid';
-        if (imageSuggestions) imageSuggestions.style.display = 'none';
-        if (messageInput) messageInput.placeholder = 'Message Cheppu...';
+        if (currentMode === 'chat') {
+            if (chatControls) chatControls.style.display = 'block'; // Keep hidden if empty, but logic handles it
+            if (imageControls) imageControls.style.display = 'none';
+            if (chatSuggestions) chatSuggestions.style.display = 'grid';
+            if (imageSuggestions) imageSuggestions.style.display = 'none';
+            if (messageInput) messageInput.placeholder = 'Message Cheppu...';
 
-        if (chatBtn) chatBtn.classList.add('active');
-        if (imageBtn) imageBtn.classList.remove('active');
+            if (chatBtn) chatBtn.classList.add('active');
+            if (imageBtn) imageBtn.classList.remove('active');
 
-    } else if (currentMode === 'image') {
-        if (chatControls) chatControls.style.display = 'none';
-        if (imageControls) imageControls.style.display = 'block';
-        if (chatSuggestions) chatSuggestions.style.display = 'none';
-        if (imageSuggestions) imageSuggestions.style.display = 'grid';
-        if (messageInput) messageInput.placeholder = 'Describe an image...';
+        } else if (currentMode === 'image') {
+            if (chatControls) chatControls.style.display = 'none';
+            if (imageControls) imageControls.style.display = 'block';
+            if (chatSuggestions) chatSuggestions.style.display = 'none';
+            if (imageSuggestions) imageSuggestions.style.display = 'grid';
+            if (messageInput) messageInput.placeholder = 'Describe an image...';
 
-        if (chatBtn) chatBtn.classList.remove('active');
-        if (imageBtn) imageBtn.classList.add('active');
+            if (chatBtn) chatBtn.classList.remove('active');
+            if (imageBtn) imageBtn.classList.add('active');
+        }
     }
-}
 
 function autoResizeTextarea() {
-    if (messageInput) {
-        messageInput.style.height = 'auto';
-        messageInput.style.height = messageInput.scrollHeight + 'px';
+        if (messageInput) {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = messageInput.scrollHeight + 'px';
+        }
     }
-}
 
 // Handle sending message
 async function handleSendMessage() {
-    if (!messageInput) return;
-    const message = messageInput.value.trim();
-    if (!message) return;
+        if (!messageInput) return;
+        const message = messageInput.value.trim();
+        if (!message) return;
 
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
-    if (messagesContainer) messagesContainer.classList.add('active');
-    const inputContainer = document.querySelector('.input-container');
-    if (inputContainer) inputContainer.style.display = 'flex';
+        if (welcomeScreen) welcomeScreen.style.display = 'none';
+        if (messagesContainer) messagesContainer.classList.add('active');
+        const inputContainer = document.querySelector('.input-container');
+        if (inputContainer) inputContainer.style.display = 'flex';
 
-    addMessageToUI('user', message);
-    sessions[currentSessionId].messages.push({ role: "user", content: message });
-    saveSession();
+        addMessageToUI('user', message);
+        sessions[currentSessionId].messages.push({ role: "user", content: message });
+        saveSession();
 
-    messageInput.value = '';
-    autoResizeTextarea();
-    if (sendBtn) sendBtn.disabled = true;
+        messageInput.value = '';
+        autoResizeTextarea();
+        if (sendBtn) sendBtn.disabled = true;
 
-    const typingId = addTypingIndicator();
+        const typingId = addTypingIndicator();
 
-    if (currentMode === 'chat') {
-        try {
-            const response = await callHuggingFaceApiWithFallback(message);
-            removeTypingIndicator(typingId);
-            addMessageToUI('ai', response);
-            sessions[currentSessionId].messages.push({ role: "assistant", content: response });
-            saveSession();
-        } catch (error) {
-            removeTypingIndicator(typingId);
-            const errorMsg = `Sorry, something went wrong. (${error.message})`;
-            addMessageToUI('ai', errorMsg);
+        if (currentMode === 'chat') {
+            try {
+                const response = await callHuggingFaceApiWithFallback(message);
+                removeTypingIndicator(typingId);
+                addMessageToUI('ai', response);
+                sessions[currentSessionId].messages.push({ role: "assistant", content: response });
+                saveSession();
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                const errorMsg = `Sorry, something went wrong. (${error.message})`;
+                addMessageToUI('ai', errorMsg);
+            }
+        } else if (currentMode === 'image') {
+            try {
+                await generateImage(message);
+                removeTypingIndicator(typingId);
+            } catch (error) {
+                removeTypingIndicator(typingId);
+                addMessageToUI('ai', `Image generation failed: ${error.message}`);
+            }
         }
-    } else if (currentMode === 'image') {
-        try {
-            await generateImage(message);
-            removeTypingIndicator(typingId);
-        } catch (error) {
-            removeTypingIndicator(typingId);
-            addMessageToUI('ai', `Image generation failed: ${error.message}`);
-        }
+
+        if (sendBtn) sendBtn.disabled = false;
+        messageInput.focus();
     }
-
-    if (sendBtn) sendBtn.disabled = false;
-    messageInput.focus();
-}
 
 // API Logic
 async function callHuggingFaceApiWithFallback(userMessage) {
-    const selectedModel = aiModelSelect && aiModelSelect.value === 'auto' ? 'llama-3.1-8b-instant' : (aiModelSelect ? aiModelSelect.value : 'llama-3.1-8b-instant');
+        const selectedModel = aiModelSelect && aiModelSelect.value === 'auto' ? 'llama-3.1-8b-instant' : (aiModelSelect ? aiModelSelect.value : 'llama-3.1-8b-instant');
 
-    if (selectedModel.startsWith('gemini')) {
-        return await callGeminiApi(selectedModel, sessions[currentSessionId].messages);
+        if (selectedModel.startsWith('gemini')) {
+            return await callGeminiApi(selectedModel, sessions[currentSessionId].messages);
+        }
+
+        const payload = {
+            model: selectedModel,
+            messages: sessions[currentSessionId].messages,
+            type: 'chat'
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+        try {
+            const response = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            const result = await response.json();
+            return result.choices[0].message.content;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+        }
     }
-
-    const payload = {
-        model: selectedModel,
-        messages: sessions[currentSessionId].messages,
-        type: 'chat'
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-    try {
-        const response = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
-        const result = await response.json();
-        return result.choices[0].message.content;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-    }
-}
 
 
 async function callGeminiApi(model, messages) {
-    if (GOOGLE_API_KEY === "YOUR_API_KEY_HERE") {
-        throw new Error("Please set your Google API Key in script.js");
-    }
+        if (GOOGLE_API_KEY === "YOUR_API_KEY_HERE") {
+            throw new Error("Please set your Google API Key in script.js");
+        }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`;
 
-    // Convert messages to Gemini format
-    const contents = messages.map(msg => {
-        if (msg.role === 'system') return null; // Gemini doesn't support system role in contents directly usually, or it's different. For now skip or prepend.
-        return {
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.content }]
+        // Convert messages to Gemini format
+        const contents = messages.map(msg => {
+            if (msg.role === 'system') return null; // Gemini doesn't support system role in contents directly usually, or it's different. For now skip or prepend.
+            return {
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            };
+        }).filter(Boolean);
+
+        // Handle system prompt if present (prepend to first user message or use system_instruction if supported, but simple prepend is safer for now)
+        const systemMsg = messages.find(m => m.role === 'system');
+        if (systemMsg && contents.length > 0 && contents[0].role === 'user') {
+            contents[0].parts[0].text = `${systemMsg.content}\n\n${contents[0].parts[0].text}`;
+        }
+
+        const payload = {
+            contents: contents
         };
-    }).filter(Boolean);
 
-    // Handle system prompt if present (prepend to first user message or use system_instruction if supported, but simple prepend is safer for now)
-    const systemMsg = messages.find(m => m.role === 'system');
-    if (systemMsg && contents.length > 0 && contents[0].role === 'user') {
-        contents[0].parts[0].text = `${systemMsg.content}\n\n${contents[0].parts[0].text}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `Gemini API Error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.candidates[0].content.parts[0].text;
     }
-
-    const payload = {
-        contents: contents
-    };
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `Gemini API Error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result.candidates[0].content.parts[0].text;
-}
 
 // UI Functions
 function addMessageToUI(role, content) {
-    if (!messagesContainer) return;
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}`;
+        if (!messagesContainer) return;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
 
-    const avatarHtml = role === 'ai' ? `
+        const avatarHtml = role === 'ai' ? `
         <div class="ai-avatar">
             <svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
@@ -554,11 +491,11 @@ function addMessageToUI(role, content) {
             ${currentUser ? `<img src="${currentUser.photoURL}" alt="U">` : 'U'}
          </div>`;
 
-    const roleName = role === 'user' ? (currentUser ? currentUser.displayName.split(' ')[0] : 'You') : 'AI Assistant';
+        const roleName = role === 'user' ? (currentUser ? currentUser.displayName.split(' ')[0] : 'You') : 'AI Assistant';
 
-    let formattedContent = role === 'ai' && typeof marked !== 'undefined' ? marked.parse(content) : content.replace(/\n/g, '<br>');
+        let formattedContent = role === 'ai' && typeof marked !== 'undefined' ? marked.parse(content) : content.replace(/\n/g, '<br>');
 
-    messageDiv.innerHTML = `
+        messageDiv.innerHTML = `
         <div class="message-header">
             ${avatarHtml}
             <span class="message-role">${roleName}</span>
@@ -567,19 +504,19 @@ function addMessageToUI(role, content) {
         <div class="message-content">${formattedContent}</div>
     `;
 
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    if (role === 'ai' && typeof hljs !== 'undefined') {
-        messageDiv.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-            enhanceCodeBlock(block);
-        });
+        if (role === 'ai' && typeof hljs !== 'undefined') {
+            messageDiv.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+                enhanceCodeBlock(block);
+            });
+        }
     }
-}
 
 function createActionButtons() {
-    return `
+        return `
         <button class="copy-btn" onclick="copyMessage(this)" title="Copy message">
             <svg class="copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
@@ -587,21 +524,21 @@ function createActionButtons() {
             </svg>
         </button>
     `;
-}
+    }
 
 function enhanceCodeBlock(codeBlock) {
-    const pre = codeBlock.parentElement;
-    let lang = 'Code';
-    codeBlock.classList.forEach(cls => {
-        if (cls.startsWith('language-')) lang = cls.replace('language-', '');
-    });
+        const pre = codeBlock.parentElement;
+        let lang = 'Code';
+        codeBlock.classList.forEach(cls => {
+            if (cls.startsWith('language-')) lang = cls.replace('language-', '');
+        });
 
-    const header = document.createElement('div');
-    header.className = 'code-header';
+        const header = document.createElement('div');
+        header.className = 'code-header';
 
-    let previewBtn = '';
-    if (lang === 'html' || lang === 'xml') {
-        previewBtn = `
+        let previewBtn = '';
+        if (lang === 'html' || lang === 'xml') {
+            previewBtn = `
             <button class="preview-btn" onclick="previewCode(this)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -610,9 +547,9 @@ function enhanceCodeBlock(codeBlock) {
                 Preview
             </button>
         `;
-    }
+        }
 
-    header.innerHTML = `
+        header.innerHTML = `
         <span class="code-lang">${lang}</span>
         <div style="display:flex; align-items:center;">
             ${previewBtn}
@@ -625,101 +562,101 @@ function enhanceCodeBlock(codeBlock) {
             </button>
         </div>
     `;
-    pre.insertBefore(header, codeBlock);
-}
-
-window.previewCode = function (btn) {
-    const pre = btn.closest('.code-header').nextElementSibling;
-    const code = pre.querySelector('code').innerText;
-
-    let previewContainer = pre.nextElementSibling;
-    if (previewContainer && previewContainer.classList.contains('preview-container')) {
-        previewContainer.remove();
-        return;
+        pre.insertBefore(header, codeBlock);
     }
 
-    previewContainer = document.createElement('div');
-    previewContainer.className = 'preview-container';
+window.previewCode = function (btn) {
+        const pre = btn.closest('.code-header').nextElementSibling;
+        const code = pre.querySelector('code').innerText;
 
-    const iframe = document.createElement('iframe');
-    iframe.className = 'preview-frame';
-    previewContainer.appendChild(iframe);
+        let previewContainer = pre.nextElementSibling;
+        if (previewContainer && previewContainer.classList.contains('preview-container')) {
+            previewContainer.remove();
+            return;
+        }
 
-    pre.parentNode.insertBefore(previewContainer, pre.nextSibling);
+        previewContainer = document.createElement('div');
+        previewContainer.className = 'preview-container';
 
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(code);
-    doc.close();
-}
+        const iframe = document.createElement('iframe');
+        iframe.className = 'preview-frame';
+        previewContainer.appendChild(iframe);
+
+        pre.parentNode.insertBefore(previewContainer, pre.nextSibling);
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(code);
+        doc.close();
+    }
 
 window.copyCode = function (btn) {
-    const pre = btn.closest('.code-header').nextElementSibling;
-    const code = pre.querySelector('code').innerText;
-    navigator.clipboard.writeText(code).then(() => {
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = 'Copied!';
-        setTimeout(() => btn.innerHTML = originalHtml, 2000);
-    });
-}
+        const pre = btn.closest('.code-header').nextElementSibling;
+        const code = pre.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = 'Copied!';
+            setTimeout(() => btn.innerHTML = originalHtml, 2000);
+        });
+    }
 
 window.copyMessage = function (btn) {
-    const content = btn.closest('.message').querySelector('.message-content').innerText;
-    navigator.clipboard.writeText(content).then(() => {
-        showToast('Copied to clipboard!');
-    });
-}
+        const content = btn.closest('.message').querySelector('.message-content').innerText;
+        navigator.clipboard.writeText(content).then(() => {
+            showToast('Copied to clipboard!');
+        });
+    }
 
 function addTypingIndicator() {
-    if (!messagesContainer) return;
-    const typingDiv = document.createElement('div');
-    typingDiv.className = 'message';
-    const typingId = 'typing-' + Date.now();
-    typingDiv.id = typingId;
-    typingDiv.innerHTML = `
+        if (!messagesContainer) return;
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message';
+        const typingId = 'typing-' + Date.now();
+        typingDiv.id = typingId;
+        typingDiv.innerHTML = `
         <div class="message-header">
             <div class="ai-avatar"><svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
             <span class="message-role">AI Assistant</span>
         </div>
         <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
     `;
-    messagesContainer.appendChild(typingDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    return typingId;
-}
-
-function removeTypingIndicator(id) {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-}
-
-async function generateImage(prompt) {
-    const api = document.getElementById('apiSelect') ? document.getElementById('apiSelect').value : 'pollinations-turbo';
-    const model = document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'flux';
-    const width = 1024;
-    const height = 1024;
-    const seed = Math.floor(Math.random() * 1000000);
-
-    let imageUrl;
-    if (api === 'pollinations-turbo') {
-        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&seed=${seed}`;
-    } else {
-        let enhancedPrompt = prompt;
-        if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5";
-        if (model === 'anime') enhancedPrompt += ", anime style, vibrant";
-        imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
+        messagesContainer.appendChild(typingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return typingId;
     }
 
-    addImageMessageToUI(imageUrl, prompt);
-    sessions[currentSessionId].messages.push({ role: "assistant", content: imageUrl, isImage: true, prompt: prompt });
-    saveSession();
-}
+function removeTypingIndicator(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+async function generateImage(prompt) {
+        const api = document.getElementById('apiSelect') ? document.getElementById('apiSelect').value : 'pollinations-turbo';
+        const model = document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : 'flux';
+        const width = 1024;
+        const height = 1024;
+        const seed = Math.floor(Math.random() * 1000000);
+
+        let imageUrl;
+        if (api === 'pollinations-turbo') {
+            imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&model=turbo&nologo=true&seed=${seed}`;
+        } else {
+            let enhancedPrompt = prompt;
+            if (model === '3d') enhancedPrompt += ", 3d render, unreal engine 5";
+            if (model === 'anime') enhancedPrompt += ", anime style, vibrant";
+            imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=${width}&height=${height}&model=flux&nologo=true&seed=${seed}`;
+        }
+
+        addImageMessageToUI(imageUrl, prompt);
+        sessions[currentSessionId].messages.push({ role: "assistant", content: imageUrl, isImage: true, prompt: prompt });
+        saveSession();
+    }
 
 function addImageMessageToUI(imageUrl, prompt) {
-    if (!messagesContainer) return;
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'message ai';
-    msgDiv.innerHTML = `
+        if (!messagesContainer) return;
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'message ai';
+        msgDiv.innerHTML = `
         <div class="ai-avatar"><svg class="ai-sparkle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>
         <div class="message-content">
             <img src="${imageUrl}" alt="Generated Image" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
@@ -730,42 +667,42 @@ function addImageMessageToUI(imageUrl, prompt) {
             </button>
         </div>
     `;
-    messagesContainer.appendChild(msgDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
 
 window.downloadImage = async function (imageUrl, prompt) {
-    try {
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (error) {
-        window.open(imageUrl, '_blank');
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            window.open(imageUrl, '_blank');
+        }
     }
-}
 
 function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker registered', reg))
-            .catch(err => console.error('Service Worker registration failed', err));
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.error('Service Worker registration failed', err));
+        }
     }
-}
 
 function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }

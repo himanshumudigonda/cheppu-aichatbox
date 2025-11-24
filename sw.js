@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cheppu-ai-v4.1';
+const CACHE_NAME = 'cheppu-ai-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -41,13 +41,34 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event
+// Fetch Event - Network First for HTML, Stale-While-Revalidate for others
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests (like Firebase/API) for now to avoid CORS issues in simple cache
+  // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin) && !ASSETS_TO_CACHE.includes(event.request.url)) {
     return;
   }
 
+  // For HTML requests (Navigation), try Network first, then Cache
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Update cache with new version
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // For other assets (CSS, JS, Images), use Cache First (Stale-While-Revalidate logic)
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -55,15 +76,13 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
         return fetch(event.request).then((response) => {
-          // Don't cache if not valid
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
           const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
           return response;
         });
       })
