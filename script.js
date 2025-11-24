@@ -59,16 +59,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Firebase Auth Logic
 function initFirebaseAuth() {
+    console.log("Initializing Firebase Auth...");
     if (typeof firebase === 'undefined') {
         console.error("Firebase SDK not loaded");
+        showToast("Error: Firebase SDK not loaded. Check your internet connection.");
         return;
     }
 
     try {
-        firebase.initializeApp(firebaseConfig);
+        // Initialize only if not already initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
 
         // Auth State Listener
         firebase.auth().onAuthStateChanged(user => {
+            console.log("Auth State Changed:", user ? "User Logged In" : "User Logged Out");
             if (user) {
                 handleUserLogin(user);
             } else {
@@ -76,20 +82,33 @@ function initFirebaseAuth() {
             }
         });
 
-        // Login Button Handler
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
+        // Login Button Handler - Re-select to be safe
+        const btn = document.getElementById('loginBtn');
+        if (btn) {
+            console.log("Login button found, attaching listener");
+            // Remove old listener to prevent duplicates (though not strictly necessary if run once)
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+
+            newBtn.addEventListener('click', () => {
+                console.log("Login button clicked");
                 const provider = new firebase.auth.GoogleAuthProvider();
                 firebase.auth().signInWithPopup(provider)
+                    .then((result) => {
+                        console.log("Login success:", result.user);
+                    })
                     .catch((error) => {
                         console.error("Login Error:", error);
                         showToast(`Login failed: ${error.message}`);
                     });
             });
+        } else {
+            console.error("Login button not found in DOM");
         }
 
     } catch (e) {
         console.error("Firebase Initialization Error:", e);
+        showToast(`Auth Error: ${e.message}`);
     }
 }
 

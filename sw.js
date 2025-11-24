@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cheppu-ai-v4';
+const CACHE_NAME = 'cheppu-ai-v4.1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
