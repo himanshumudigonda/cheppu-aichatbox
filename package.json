@@ -4,8 +4,11 @@
   "description": "AI chatbot with chat, image generation, and text-to-speech capabilities",
   "main": "server.js",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
     "start": "node server.js",
-    "dev": "node server.js",
     "validate-assets": "node ./scripts/validate_assets.js"
   },
   "keywords": [
@@ -14,16 +17,29 @@
     "huggingface",
     "image-generation",
     "text-to-speech",
-    "proxy-server"
+    "proxy-server",
+    "react"
   ],
   "author": "Your Name",
   "license": "MIT",
-  "engines": {
-    "node": ">=14.0.0"
-  },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.344.0",
+    "firebase": "^10.8.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.4"
   }
 }
