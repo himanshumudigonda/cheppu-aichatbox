@@ -345,22 +345,32 @@ export default function App() {
     const [isTyping, setIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentSessionId, setCurrentSessionId] = useState(() => Date.now().toString());
-
     const scrollRef = useRef(null);
     const theme = THEMES[activeThemeId];
 
     // --- Auth & Data Effects ---
     useEffect(() => {
         const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
+            try {
+                console.log("Starting auth initialization...");
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    console.log("Using custom token");
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    console.log("Signing in anonymously");
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth initialization failed:", error);
+            } finally {
+                setLoadingAuth(false);
             }
-            setLoadingAuth(false);
         };
         initAuth();
-        const unsubscribe = onAuthStateChanged(auth, setUser);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            console.log("Auth state changed:", user ? "User logged in" : "No user");
+            setUser(user);
+        });
         return () => unsubscribe();
     }, []);
 
@@ -607,8 +617,8 @@ export default function App() {
                             <button
                                 onClick={() => setMode('chat')}
                                 className={`flex items-center gap-2 px-6 py-2 text-xs font-bold uppercase tracking-widest border transition-all ${theme.radius} ${mode === 'chat'
-                                        ? `${theme.button}`
-                                        : `bg-transparent border-transparent opacity-50 hover:opacity-100 hover:border-current`
+                                    ? `${theme.button}`
+                                    : `bg-transparent border-transparent opacity-50 hover:opacity-100 hover:border-current`
                                     }`}
                             >
                                 <MessageSquare size={14} />
@@ -617,8 +627,8 @@ export default function App() {
                             <button
                                 onClick={() => setMode('image')}
                                 className={`flex items-center gap-2 px-6 py-2 text-xs font-bold uppercase tracking-widest border transition-all ${theme.radius} ${mode === 'image'
-                                        ? `${theme.button}`
-                                        : `bg-transparent border-transparent opacity-50 hover:opacity-100 hover:border-current`
+                                    ? `${theme.button}`
+                                    : `bg-transparent border-transparent opacity-50 hover:opacity-100 hover:border-current`
                                     }`}
                             >
                                 <ImageIcon size={14} />
@@ -660,8 +670,8 @@ export default function App() {
                                             setActiveThemeId(t.id);
                                         }}
                                         className={`text-left p-6 border transition-all duration-300 relative group overflow-hidden ${t.radius} ${activeThemeId === t.id
-                                                ? `border-current ${theme.accent} bg-white/10`
-                                                : 'border-white/10 hover:border-white/30 bg-black/20 hover:scale-[1.02]'
+                                            ? `border-current ${theme.accent} bg-white/10`
+                                            : 'border-white/10 hover:border-white/30 bg-black/20 hover:scale-[1.02]'
                                             }`}
                                     >
                                         {/* Mini Preview of theme BG */}
@@ -737,8 +747,8 @@ export default function App() {
                                     onClick={() => handleSend()}
                                     disabled={!input.trim() || isTyping}
                                     className={`p-2 transition-all duration-200 ${theme.radius} ${input.trim()
-                                            ? `${theme.button}`
-                                            : 'opacity-50 cursor-not-allowed bg-white/5'
+                                        ? `${theme.button}`
+                                        : 'opacity-50 cursor-not-allowed bg-white/5'
                                         }`}
                                 >
                                     <Send size={18} />
@@ -858,8 +868,8 @@ function MessageBubble({ message, theme }) {
             {/* Avatar (Hidden for Kinetic/Invisible to match vibe) */}
             {theme.id !== 'kinetic' && theme.id !== 'invisible' && (
                 <div className={`w-10 h-10 border flex items-center justify-center shrink-0 ${theme.radius} ${isAI
-                        ? `border-current ${theme.accent} ${theme.card}`
-                        : `border-white/20 bg-white/5`
+                    ? `border-current ${theme.accent} ${theme.card}`
+                    : `border-white/20 bg-white/5`
                     }`}>
                     {isAI ? <Cpu size={20} /> : <User size={20} />}
                 </div>
@@ -867,8 +877,8 @@ function MessageBubble({ message, theme }) {
 
             {/* Bubble Content */}
             <div className={`relative max-w-[85%] p-6 ${theme.radius} ${isAI
-                    ? theme.bubbleAi
-                    : theme.bubbleUser
+                ? theme.bubbleAi
+                : theme.bubbleUser
                 }`}>
 
                 {message.type === 'image' ? (
